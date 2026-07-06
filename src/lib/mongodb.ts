@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import type { PreparationItem, Task } from "@/types";
+import type { InventoryItem, PreparationItem, Task } from "@/types";
 
 type MongoRuntimeConfig = {
   databaseName: string;
@@ -63,6 +63,7 @@ export async function getAppCollections() {
   const db = connectedClient.db(databaseName);
 
   return {
+    inventory: db.collection<InventoryItem>("raw_inventory"),
     preparations: db.collection<PreparationItem>("inventory"),
     tasks: db.collection<Task>("tasks"),
   };

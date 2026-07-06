@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, FlaskConical } from "lucide-react";
+import { CheckCircle2, ClipboardList, FlaskConical, Package } from "lucide-react";
 import { classNames } from "@/lib/utils";
 import type { AppView } from "@/types";
 
@@ -10,7 +10,13 @@ type BottomNavProps = {
 
 export function BottomNav({ activeView, pendingTaskCount, onViewChange }: BottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 grid h-14 grid-cols-3 border-t border-[#dedbd3] bg-white/95 px-3 backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 grid h-14 grid-cols-4 border-t border-[#dedbd3] bg-white/95 px-2 backdrop-blur lg:hidden">
+      <BottomNavButton
+        active={activeView === "inventory"}
+        icon={<Package size={17} />}
+        label="Stock"
+        onClick={() => onViewChange("inventory")}
+      />
       <BottomNavButton
         active={activeView === "preparation"}
         icon={<FlaskConical size={17} />}

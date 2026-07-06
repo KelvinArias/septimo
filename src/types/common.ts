@@ -1,1 +1,1 @@
-export type AppView = "preparation" | "tasks" | "completed";
+export type AppView = "inventory" | "preparation" | "tasks" | "completed";

@@ -3,6 +3,9 @@
 import { Plus } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { InventoryDashboard } from "./inventory/inventory-dashboard";
+import { InventoryItemDetails } from "./inventory/inventory-item-details";
+import { InventoryItemForm } from "./inventory/inventory-item-form";
 import { PreparationDashboard } from "./preparation/preparation-dashboard";
 import { PreparationItemDetails } from "./preparation/preparation-item-details";
 import { PreparationItemForm } from "./preparation/preparation-item-form";
@@ -13,47 +16,78 @@ import { TaskForm } from "./tasks/task-form";
 import { TaskList } from "./tasks/task-list";
 import { Toast } from "./ui/toast";
 import {
+  createInventoryItemDraft,
   createPreparationItemDraft,
   createTaskDraft,
+  filterInventoryItems,
   filterPreparationItems,
   getGeneratedLowStockTasks,
+  isInventoryLowStock,
   isLowStock,
   markTaskCompleted,
+  prepareInventoryItemForSave,
   preparePreparationItemForSave,
   prepareTaskForSave,
 } from "@/lib/utils";
+import {
+  fetchInventoryItems,
+  removeInventoryItem,
+  saveInventoryItem,
+} from "@/services/inventory-client.service";
 import {
   fetchPreparationItems,
   removePreparationItem,
   savePreparationItem,
 } from "@/services/preparation-client.service";
 import { fetchTasks, removeTask, saveTask } from "@/services/task-client.service";
-import type { AppView, PreparationCategory, PreparationItem, Task } from "@/types";
+import type {
+  AppView,
+  InventoryCategory,
+  InventoryItem,
+  PreparationCategory,
+  PreparationItem,
+  Task,
+} from "@/types";
 
 export function RestaurantPrepDashboard() {
-  const [activeView, setActiveView] = useState<AppView>("preparation");
-  const [items, setItems] = useState<PreparationItem[]>([]);
+  const [activeView, setActiveView] = useState<AppView>("inventory");
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [preparationItems, setPreparationItems] = useState<PreparationItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<"All" | PreparationCategory>("All");
-  const [lowOnly, setLowOnly] = useState(false);
-  const [editingItem, setEditingItem] = useState<PreparationItem | null>(null);
-  const [viewingItem, setViewingItem] = useState<PreparationItem | null>(null);
+  const [inventorySearch, setInventorySearch] = useState("");
+  const [inventoryCategory, setInventoryCategory] = useState<"All" | InventoryCategory>("All");
+  const [inventoryLowOnly, setInventoryLowOnly] = useState(false);
+  const [inventoryActiveOnly, setInventoryActiveOnly] = useState(true);
+  const [preparationSearch, setPreparationSearch] = useState("");
+  const [preparationCategory, setPreparationCategory] = useState<"All" | PreparationCategory>(
+    "All",
+  );
+  const [preparationLowOnly, setPreparationLowOnly] = useState(false);
+  const [editingInventoryItem, setEditingInventoryItem] = useState<InventoryItem | null>(null);
+  const [viewingInventoryItem, setViewingInventoryItem] = useState<InventoryItem | null>(null);
+  const [editingPreparationItem, setEditingPreparationItem] = useState<PreparationItem | null>(
+    null,
+  );
+  const [viewingPreparationItem, setViewingPreparationItem] = useState<PreparationItem | null>(
+    null,
+  );
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [dismissedAutoTaskIds, setDismissedAutoTaskIds] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [preparationItems, loadedTasks] = await Promise.all([
+        const [loadedInventoryItems, loadedPreparationItems, loadedTasks] = await Promise.all([
+          fetchInventoryItems(),
           fetchPreparationItems(),
           fetchTasks(),
         ]);
 
-        setItems(preparationItems);
+        setInventoryItems(loadedInventoryItems);
+        setPreparationItems(loadedPreparationItems);
         setTasks(loadedTasks);
         setApiMessage(null);
       } catch (error) {
@@ -74,31 +108,102 @@ export function RestaurantPrepDashboard() {
     return () => window.clearTimeout(timeoutId);
   }, [successMessage]);
 
-  const lowStockItems = useMemo(() => items.filter(isLowStock), [items]);
+  const lowInventoryItems = useMemo(
+    () => inventoryItems.filter(isInventoryLowStock),
+    [inventoryItems],
+  );
+  const lowPreparationItems = useMemo(
+    () => preparationItems.filter(isLowStock),
+    [preparationItems],
+  );
   const generatedTasks = useMemo(
     () =>
-      getGeneratedLowStockTasks(items, tasks).filter(
+      getGeneratedLowStockTasks(preparationItems, tasks).filter(
         (task) => !dismissedAutoTaskIds.includes(task.id),
       ),
-    [dismissedAutoTaskIds, items, tasks],
+    [dismissedAutoTaskIds, preparationItems, tasks],
   );
   const allTasks = useMemo(() => [...generatedTasks, ...tasks], [generatedTasks, tasks]);
   const pendingTasks = allTasks.filter((task) => task.status === "pending");
   const completedTasks = allTasks.filter((task) => task.status === "completed");
-  const filteredItems = filterPreparationItems(items, { search, category, lowOnly });
+  const filteredInventoryItems = filterInventoryItems(inventoryItems, {
+    activeOnly: inventoryActiveOnly,
+    category: inventoryCategory,
+    lowOnly: inventoryLowOnly,
+    search: inventorySearch,
+  });
+  const filteredPreparationItems = filterPreparationItems(preparationItems, {
+    category: preparationCategory,
+    lowOnly: preparationLowOnly,
+    search: preparationSearch,
+  });
 
-  async function handleSaveItem(event: FormEvent<HTMLFormElement>) {
+  async function handleSaveInventoryItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!editingItem) return;
+    if (!editingInventoryItem) return;
 
-    const { item, isNew } = preparePreparationItemForSave(editingItem);
+    const { item, isNew } = prepareInventoryItemForSave(editingInventoryItem);
+
+    try {
+      await saveInventoryItem(item, isNew);
+      setInventoryItems((current) => upsertInventoryItem(current, item));
+      setViewingInventoryItem(isNew ? null : item);
+      setEditingInventoryItem(null);
+      setApiMessage(null);
+      setSuccessMessage(
+        isNew ? `${item.name} was added to inventory.` : `${item.name} was updated.`,
+      );
+    } catch (error) {
+      setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
+    }
+  }
+
+  async function handleDeleteInventoryItem(itemId: string) {
+    try {
+      await removeInventoryItem(itemId);
+      setInventoryItems((current) => current.filter((item) => item.id !== itemId));
+      setViewingInventoryItem((current) => (current?.id === itemId ? null : current));
+      setApiMessage(null);
+      setSuccessMessage(null);
+    } catch (error) {
+      setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
+    }
+  }
+
+  async function handleUpdateInventoryQuantity(itemId: string, quantity: number) {
+    const item = inventoryItems.find((currentItem) => currentItem.id === itemId);
+    const now = new Date().toISOString();
+
+    if (!item) return;
+
+    const updatedItem = { ...item, currentQuantity: quantity, updatedAt: now };
+
+    try {
+      await saveInventoryItem(updatedItem, false);
+      setInventoryItems((current) => upsertInventoryItem(current, updatedItem));
+      setApiMessage(null);
+      setSuccessMessage(`${updatedItem.name} quantity was updated.`);
+    } catch (error) {
+      setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
+    }
+  }
+
+  async function handleSavePreparationItem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingPreparationItem) return;
+
+    const { item, isNew } = preparePreparationItemForSave(editingPreparationItem);
 
     try {
       await savePreparationItem(item, isNew);
-      setItems((current) => upsertPreparationItem(current, item));
-      setViewingItem(isNew ? null : item);
-      setEditingItem(null);
+      setPreparationItems((current) => upsertPreparationItem(current, item));
+      setViewingPreparationItem(isNew ? null : item);
+      setEditingPreparationItem(null);
       setApiMessage(null);
       setSuccessMessage(
         isNew ? `${item.name} was added to preparation.` : `${item.name} was updated.`,
@@ -109,17 +214,17 @@ export function RestaurantPrepDashboard() {
     }
   }
 
-  async function handleDeleteItem(itemId: string) {
+  async function handleDeletePreparationItem(itemId: string) {
     try {
       await removePreparationItem(itemId);
-      setItems((current) => current.filter((item) => item.id !== itemId));
+      setPreparationItems((current) => current.filter((item) => item.id !== itemId));
       setTasks((current) =>
         current.filter(
           (task) =>
             task.linkedPreparationItemId !== itemId && task.linkedInventoryItemId !== itemId,
         ),
       );
-      setViewingItem((current) => (current?.id === itemId ? null : current));
+      setViewingPreparationItem((current) => (current?.id === itemId ? null : current));
       setApiMessage(null);
       setSuccessMessage(null);
     } catch (error) {
@@ -128,8 +233,8 @@ export function RestaurantPrepDashboard() {
     }
   }
 
-  async function handleUpdateAmount(itemId: string, amount: number) {
-    const item = items.find((currentItem) => currentItem.id === itemId);
+  async function handleUpdatePreparationAmount(itemId: string, amount: number) {
+    const item = preparationItems.find((currentItem) => currentItem.id === itemId);
     const now = new Date().toISOString();
 
     if (!item) return;
@@ -138,7 +243,7 @@ export function RestaurantPrepDashboard() {
 
     try {
       await savePreparationItem(updatedItem, false);
-      setItems((current) => upsertPreparationItem(current, updatedItem));
+      setPreparationItems((current) => upsertPreparationItem(current, updatedItem));
       setApiMessage(null);
       setSuccessMessage(`${updatedItem.name} quantity was updated.`);
     } catch (error) {
@@ -205,12 +310,19 @@ export function RestaurantPrepDashboard() {
   return (
     <AppShell
       activeView={activeView}
-      action={getActionButton(activeView, setEditingItem, setEditingTask)}
+      action={getActionButton(
+        activeView,
+        setEditingInventoryItem,
+        setEditingPreparationItem,
+        setEditingTask,
+      )}
       pendingTaskCount={pendingTasks.length}
       subtitle={getSubtitle(
         activeView,
-        items.length,
-        lowStockItems.length,
+        inventoryItems.length,
+        lowInventoryItems.length,
+        preparationItems.length,
+        lowPreparationItems.length,
         pendingTasks.length,
         generatedTasks.length,
         completedTasks.length,
@@ -230,24 +342,48 @@ export function RestaurantPrepDashboard() {
         </div>
       )}
 
+      {activeView === "inventory" && (
+        <InventoryDashboard
+          filters={{
+            activeOnly: inventoryActiveOnly,
+            category: inventoryCategory,
+            lowOnly: inventoryLowOnly,
+            search: inventorySearch,
+          }}
+          items={filteredInventoryItems}
+          onActiveOnlyChange={setInventoryActiveOnly}
+          onCategoryChange={setInventoryCategory}
+          onDelete={handleDeleteInventoryItem}
+          onEdit={setEditingInventoryItem}
+          onLowOnlyChange={setInventoryLowOnly}
+          onSearchChange={setInventorySearch}
+          onUpdateQuantity={handleUpdateInventoryQuantity}
+          onView={setViewingInventoryItem}
+        />
+      )}
+
       {activeView === "preparation" && (
         <PreparationDashboard
-          filters={{ search, category, lowOnly }}
-          items={filteredItems}
-          onCategoryChange={setCategory}
-          onDelete={handleDeleteItem}
-          onEdit={setEditingItem}
-          onLowOnlyChange={setLowOnly}
-          onSearchChange={setSearch}
-          onUpdateAmount={handleUpdateAmount}
-          onView={setViewingItem}
+          filters={{
+            category: preparationCategory,
+            lowOnly: preparationLowOnly,
+            search: preparationSearch,
+          }}
+          items={filteredPreparationItems}
+          onCategoryChange={setPreparationCategory}
+          onDelete={handleDeletePreparationItem}
+          onEdit={setEditingPreparationItem}
+          onLowOnlyChange={setPreparationLowOnly}
+          onSearchChange={setPreparationSearch}
+          onUpdateAmount={handleUpdatePreparationAmount}
+          onView={setViewingPreparationItem}
         />
       )}
 
       {activeView === "tasks" && (
         <TaskList
           generatedCount={generatedTasks.length}
-          preparations={items}
+          preparations={preparationItems}
           tasks={pendingTasks}
           onComplete={handleCompleteTask}
           onDelete={handleDeleteTask}
@@ -263,12 +399,21 @@ export function RestaurantPrepDashboard() {
         />
       )}
 
-      {editingItem && (
+      {editingInventoryItem && (
+        <InventoryItemForm
+          item={editingInventoryItem}
+          onChange={setEditingInventoryItem}
+          onClose={() => setEditingInventoryItem(null)}
+          onSave={handleSaveInventoryItem}
+        />
+      )}
+
+      {editingPreparationItem && (
         <PreparationItemForm
-          item={editingItem}
-          onChange={setEditingItem}
-          onClose={() => setEditingItem(null)}
-          onSave={handleSaveItem}
+          item={editingPreparationItem}
+          onChange={setEditingPreparationItem}
+          onClose={() => setEditingPreparationItem(null)}
+          onSave={handleSavePreparationItem}
         />
       )}
 
@@ -281,13 +426,24 @@ export function RestaurantPrepDashboard() {
         />
       )}
 
-      {viewingItem && (
-        <PreparationItemDetails
-          item={viewingItem}
-          onClose={() => setViewingItem(null)}
+      {viewingInventoryItem && (
+        <InventoryItemDetails
+          item={viewingInventoryItem}
+          onClose={() => setViewingInventoryItem(null)}
           onEdit={() => {
-            setEditingItem(viewingItem);
-            setViewingItem(null);
+            setEditingInventoryItem(viewingInventoryItem);
+            setViewingInventoryItem(null);
+          }}
+        />
+      )}
+
+      {viewingPreparationItem && (
+        <PreparationItemDetails
+          item={viewingPreparationItem}
+          onClose={() => setViewingPreparationItem(null)}
+          onEdit={() => {
+            setEditingPreparationItem(viewingPreparationItem);
+            setViewingPreparationItem(null);
           }}
         />
       )}
@@ -297,6 +453,12 @@ export function RestaurantPrepDashboard() {
       )}
     </AppShell>
   );
+}
+
+function upsertInventoryItem(items: InventoryItem[], item: InventoryItem) {
+  return items.some((currentItem) => currentItem.id === item.id)
+    ? items.map((currentItem) => (currentItem.id === item.id ? item : currentItem))
+    : [item, ...items];
 }
 
 function upsertPreparationItem(items: PreparationItem[], item: PreparationItem) {
@@ -317,14 +479,26 @@ function getErrorMessage(error: unknown) {
 
 function getActionButton(
   view: AppView,
-  setEditingItem: (item: PreparationItem) => void,
+  setEditingInventoryItem: (item: InventoryItem) => void,
+  setEditingPreparationItem: (item: PreparationItem) => void,
   setEditingTask: (task: Task) => void,
 ) {
+  if (view === "inventory") {
+    return (
+      <Button
+        className="h-12 w-12 rounded-full p-0 shadow-lg lg:h-9 lg:w-auto lg:rounded-md lg:px-4 lg:shadow-none"
+        onClick={() => setEditingInventoryItem(createInventoryItemDraft())}
+      >
+        <Plus size={18} /> <span className="hidden lg:inline">Add Item</span>
+      </Button>
+    );
+  }
+
   if (view === "preparation") {
     return (
       <Button
         className="h-12 w-12 rounded-full p-0 shadow-lg lg:h-9 lg:w-auto lg:rounded-md lg:px-4 lg:shadow-none"
-        onClick={() => setEditingItem(createPreparationItemDraft())}
+        onClick={() => setEditingPreparationItem(createPreparationItemDraft())}
       >
         <Plus size={18} /> <span className="hidden lg:inline">Add Preparation</span>
       </Button>
@@ -346,6 +520,7 @@ function getActionButton(
 }
 
 function getTitle(view: AppView) {
+  if (view === "inventory") return "Inventory";
   if (view === "tasks") return "Tasks";
   if (view === "completed") return "Completed Tasks";
   return "Preparation";
@@ -353,12 +528,18 @@ function getTitle(view: AppView) {
 
 function getSubtitle(
   view: AppView,
-  itemCount: number,
-  lowStockCount: number,
+  inventoryCount: number,
+  lowInventoryCount: number,
+  preparationCount: number,
+  lowPreparationCount: number,
   pendingCount: number,
   generatedTaskCount: number,
   completedCount: number,
 ) {
+  if (view === "inventory") {
+    return `${inventoryCount} raw items - ${lowInventoryCount} low stock`;
+  }
+
   if (view === "tasks") {
     return `${pendingCount} pending - ${generatedTaskCount} from low prep`;
   }
@@ -367,5 +548,5 @@ function getSubtitle(
     return `${completedCount} completed`;
   }
 
-  return `${itemCount} preparations - ${lowStockCount} low stock`;
+  return `${preparationCount} preparations - ${lowPreparationCount} low stock`;
 }

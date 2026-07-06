@@ -1,10 +1,23 @@
-import type { PreparationCategory, PreparationItem, Task } from "@/types";
+import type {
+  InventoryCategory,
+  InventoryItem,
+  PreparationCategory,
+  PreparationItem,
+  Task,
+} from "@/types";
 import { emptyIngredient } from "./constants";
 
 export type PreparationFilterState = {
   search: string;
   category: "All" | PreparationCategory;
   lowOnly: boolean;
+};
+
+export type InventoryFilterState = {
+  search: string;
+  category: "All" | InventoryCategory;
+  lowOnly: boolean;
+  activeOnly: boolean;
 };
 
 export function classNames(...values: Array<string | false | undefined>) {
@@ -23,6 +36,10 @@ export function formatDate(value?: string) {
 
 export function isLowStock(item: PreparationItem) {
   return item.currentAmount <= item.minimumAmount;
+}
+
+export function isInventoryLowStock(item: InventoryItem) {
+  return item.currentQuantity <= item.minimumQuantity;
 }
 
 export function getNumberInputValue(value: number) {
@@ -54,6 +71,38 @@ export function filterPreparationItems(items: PreparationItem[], filters: Prepar
     const matchesLowStock = !filters.lowOnly || isLowStock(item);
 
     return matchesCategory && matchesLowStock;
+  });
+}
+
+export function searchInventoryItems(items: InventoryItem[], search: string) {
+  const normalizedSearch = search.trim().toLowerCase();
+
+  if (!normalizedSearch) {
+    return items;
+  }
+
+  return items.filter((item) =>
+    [
+      item.name,
+      item.category,
+      item.supplier ?? "",
+      item.storageLocation ?? "",
+      item.sku ?? "",
+      item.notes ?? "",
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedSearch),
+  );
+}
+
+export function filterInventoryItems(items: InventoryItem[], filters: InventoryFilterState) {
+  return searchInventoryItems(items, filters.search).filter((item) => {
+    const matchesCategory = filters.category === "All" || item.category === filters.category;
+    const matchesLowStock = !filters.lowOnly || isInventoryLowStock(item);
+    const matchesActive = !filters.activeOnly || item.active;
+
+    return matchesCategory && matchesLowStock && matchesActive;
   });
 }
 
@@ -112,6 +161,27 @@ export function createPreparationItemDraft(): PreparationItem {
   };
 }
 
+export function createInventoryItemDraft(): InventoryItem {
+  return {
+    id: "",
+    name: "",
+    category: "Fruit",
+    currentQuantity: 0,
+    minimumQuantity: 0,
+    unit: "units",
+    dateAdded: "",
+    updatedAt: "",
+    expirationDate: "",
+    supplier: "",
+    storageLocation: "",
+    notes: "",
+    parLevel: 0,
+    costPerUnit: 0,
+    sku: "",
+    active: true,
+  };
+}
+
 export function createTaskDraft(): Task {
   return {
     id: "",
@@ -138,6 +208,24 @@ export function preparePreparationItemForSave(item: PreparationItem): {
         (ingredient) => ingredient.name.trim() && ingredient.amount > 0,
       ),
       createdAt: item.createdAt || now,
+      updatedAt: now,
+    },
+  };
+}
+
+export function prepareInventoryItemForSave(item: InventoryItem): {
+  item: InventoryItem;
+  isNew: boolean;
+} {
+  const now = new Date().toISOString();
+  const isNew = !item.id;
+
+  return {
+    isNew,
+    item: {
+      ...item,
+      id: item.id || `raw-${slugify(item.name)}-${Date.now()}`,
+      dateAdded: item.dateAdded || now,
       updatedAt: now,
     },
   };
