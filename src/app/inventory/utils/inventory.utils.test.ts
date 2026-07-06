@@ -49,6 +49,12 @@ describe("isInventoryLowStock", () => {
       false,
     );
   });
+
+  it("returns false when there is no minimum quantity set", () => {
+    expect(isInventoryLowStock(inventoryItem({ currentQuantity: 0, minimumQuantity: 0 }))).toBe(
+      false,
+    );
+  });
 });
 
 describe("normalizeInventoryName", () => {

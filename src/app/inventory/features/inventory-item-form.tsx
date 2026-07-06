@@ -62,11 +62,10 @@ export function InventoryItemForm({
           </Field>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <Field label="Current Quantity" required>
+          <Field label="Current Quantity">
             <input
               className="input"
               min="0"
-              required
               step="0.1"
               type="number"
               value={getNumberInputValue(item.currentQuantity)}
@@ -78,11 +77,10 @@ export function InventoryItemForm({
               }
             />
           </Field>
-          <Field label="Minimum Quantity" required>
+          <Field label="Minimum Quantity">
             <input
               className="input"
               min="0"
-              required
               step="0.1"
               type="number"
               value={getNumberInputValue(item.minimumQuantity)}

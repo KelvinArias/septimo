@@ -9,7 +9,7 @@ export type InventoryFilterState = {
 };
 
 export function isInventoryLowStock(item: InventoryItem) {
-  return item.currentQuantity <= item.minimumQuantity;
+  return item.minimumQuantity > 0 && item.currentQuantity <= item.minimumQuantity;
 }
 
 export function normalizeInventoryName(name: string) {
