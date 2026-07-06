@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import { CompletedTasksView } from "./tasks/completed-tasks-view";
 import { TaskForm } from "./tasks/task-form";
 import { TaskList } from "./tasks/task-list";
+import { Toast } from "./ui/toast";
 import {
   createInventoryItemDraft,
   createTaskDraft,
@@ -35,6 +36,7 @@ export function RestaurantPrepDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"All" | InventoryCategory>("All");
   const [lowOnly, setLowOnly] = useState(false);
@@ -64,6 +66,14 @@ export function RestaurantPrepDashboard() {
     void loadData();
   }, []);
 
+  useEffect(() => {
+    if (!successMessage) return;
+
+    const timeoutId = window.setTimeout(() => setSuccessMessage(null), 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [successMessage]);
+
   const lowStockItems = useMemo(() => items.filter(isLowStock), [items]);
   const generatedTasks = useMemo(
     () =>
@@ -87,11 +97,15 @@ export function RestaurantPrepDashboard() {
     try {
       await saveInventoryItem(item, isNew);
       setItems((current) => upsertInventoryItem(current, item));
-      setViewingItem(item);
+      setViewingItem(isNew ? null : item);
       setEditingItem(null);
       setApiMessage(null);
+      setSuccessMessage(
+        isNew ? `${item.name} was added to inventory.` : `${item.name} was updated.`,
+      );
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -102,8 +116,10 @@ export function RestaurantPrepDashboard() {
       setTasks((current) => current.filter((task) => task.linkedInventoryItemId !== itemId));
       setViewingItem((current) => (current?.id === itemId ? null : current));
       setApiMessage(null);
+      setSuccessMessage(null);
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -119,8 +135,10 @@ export function RestaurantPrepDashboard() {
       await saveInventoryItem(updatedItem, false);
       setItems((current) => upsertInventoryItem(current, updatedItem));
       setApiMessage(null);
+      setSuccessMessage(`${updatedItem.name} quantity was updated.`);
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -137,8 +155,10 @@ export function RestaurantPrepDashboard() {
       setTasks((current) => upsertTask(current, task));
       setEditingTask(null);
       setApiMessage(null);
+      setSuccessMessage(null);
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -151,8 +171,10 @@ export function RestaurantPrepDashboard() {
       setTasks((current) => upsertTask(current, completedTask));
       setDismissedAutoTaskIds((current) => current.filter((taskId) => taskId !== task.id));
       setApiMessage(null);
+      setSuccessMessage(null);
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -168,8 +190,10 @@ export function RestaurantPrepDashboard() {
       await removeTask(taskId);
       setTasks((current) => current.filter((task) => task.id !== taskId));
       setApiMessage(null);
+      setSuccessMessage(null);
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setSuccessMessage(null);
     }
   }
 
@@ -256,8 +280,15 @@ export function RestaurantPrepDashboard() {
         <InventoryItemDetails
           item={viewingItem}
           onClose={() => setViewingItem(null)}
-          onEdit={() => setEditingItem(viewingItem)}
+          onEdit={() => {
+            setEditingItem(viewingItem);
+            setViewingItem(null);
+          }}
         />
+      )}
+
+      {successMessage && (
+        <Toast message={successMessage} onClose={() => setSuccessMessage(null)} />
       )}
     </AppShell>
   );

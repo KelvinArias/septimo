@@ -25,6 +25,14 @@ export function isLowStock(item: InventoryItem) {
   return item.currentAmount <= item.minimumAmount;
 }
 
+export function getNumberInputValue(value: number) {
+  return value === 0 ? "" : String(value);
+}
+
+export function parseNumberInputValue(value: string) {
+  return value === "" ? 0 : Number(value);
+}
+
 export function searchInventoryItems(items: InventoryItem[], search: string) {
   const normalizedSearch = search.trim().toLowerCase();
 

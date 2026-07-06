@@ -1,5 +1,8 @@
 import { Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SelectControl } from "@/components/ui/select-control";
 import { emptyIngredient, units } from "@/lib/constants";
+import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
 import type { Ingredient, Unit } from "@/types";
 
 type IngredientListProps = {
@@ -22,18 +25,19 @@ export function IngredientList({ ingredients, onChange }: IngredientListProps) {
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6f6960]">
           Ingredients
         </p>
-        <button
-          className="inline-flex items-center gap-1 text-xs font-medium text-[#5e5a53]"
+        <Button
+          className="min-h-9 px-3 text-xs lg:min-h-9"
+          variant="secondary"
           type="button"
           onClick={() => onChange([...ingredients, { ...emptyIngredient }])}
         >
-          <Plus size={14} /> Add
-        </button>
+          <Plus size={14} /> Add Ingredient
+        </Button>
       </div>
       <div className="space-y-2">
         {ingredients.map((ingredient, index) => (
           <div
-            key={`${index}-${ingredient.name}`}
+            key={index}
             className="grid gap-2 rounded-md bg-[#f4f2ef] p-3 sm:grid-cols-[1fr_90px_92px_32px] sm:bg-transparent sm:p-0"
           >
             <input
@@ -50,16 +54,15 @@ export function IngredientList({ ingredients, onChange }: IngredientListProps) {
               placeholder="Amt"
               step="0.1"
               type="number"
-              value={ingredient.amount}
+              value={getNumberInputValue(ingredient.amount)}
               onChange={(event) =>
                 updateIngredient(index, {
                   ...ingredient,
-                  amount: Number(event.target.value),
+                  amount: parseNumberInputValue(event.target.value),
                 })
               }
             />
-            <select
-              className="input"
+            <SelectControl
               value={ingredient.unit}
               onChange={(event) =>
                 updateIngredient(index, {
@@ -71,7 +74,7 @@ export function IngredientList({ ingredients, onChange }: IngredientListProps) {
               {units.map((value) => (
                 <option key={value}>{value}</option>
               ))}
-            </select>
+            </SelectControl>
             <button
               className="inline-flex min-h-11 items-center justify-center rounded-md border border-[#d8d4cc] text-[#6b655d] sm:h-9 sm:min-h-9"
               title="Remove ingredient"

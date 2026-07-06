@@ -4,7 +4,9 @@ import { IngredientList } from "./ingredient-list";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import { SelectControl } from "@/components/ui/select-control";
 import { inventoryCategories, units } from "@/lib/constants";
+import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
 import type { InventoryCategory, InventoryItem, Unit } from "@/types";
 
 type InventoryItemFormProps = {
@@ -38,8 +40,7 @@ export function InventoryItemForm({
         </Field>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Category" required>
-            <select
-              className="input"
+            <SelectControl
               value={item.category}
               onChange={(event) =>
                 onChange({ ...item, category: event.target.value as InventoryCategory })
@@ -48,18 +49,17 @@ export function InventoryItemForm({
               {inventoryCategories.map((value) => (
                 <option key={value}>{value}</option>
               ))}
-            </select>
+            </SelectControl>
           </Field>
           <Field label="Unit" required>
-            <select
-              className="input"
+            <SelectControl
               value={item.unit}
               onChange={(event) => onChange({ ...item, unit: event.target.value as Unit })}
             >
               {units.map((value) => (
                 <option key={value}>{value}</option>
               ))}
-            </select>
+            </SelectControl>
           </Field>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -70,9 +70,12 @@ export function InventoryItemForm({
               required
               step="0.1"
               type="number"
-              value={item.currentAmount}
+              value={getNumberInputValue(item.currentAmount)}
               onChange={(event) =>
-                onChange({ ...item, currentAmount: Number(event.target.value) })
+                onChange({
+                  ...item,
+                  currentAmount: parseNumberInputValue(event.target.value),
+                })
               }
             />
           </Field>
@@ -83,9 +86,12 @@ export function InventoryItemForm({
               required
               step="0.1"
               type="number"
-              value={item.minimumAmount}
+              value={getNumberInputValue(item.minimumAmount)}
               onChange={(event) =>
-                onChange({ ...item, minimumAmount: Number(event.target.value) })
+                onChange({
+                  ...item,
+                  minimumAmount: parseNumberInputValue(event.target.value),
+                })
               }
             />
           </Field>

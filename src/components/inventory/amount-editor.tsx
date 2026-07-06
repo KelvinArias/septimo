@@ -1,8 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { useState } from "react";
-import { classNames, isLowStock } from "@/lib/utils";
+import {
+  classNames,
+  getNumberInputValue,
+  isLowStock,
+  parseNumberInputValue,
+} from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 
 type AmountEditorProps = {
@@ -11,14 +15,14 @@ type AmountEditorProps = {
 };
 
 export function AmountEditor({ item, onUpdateAmount }: AmountEditorProps) {
-  const [value, setValue] = useState(String(item.currentAmount));
+  const [value, setValue] = useState(getNumberInputValue(item.currentAmount));
 
   return (
     <form
-      className="flex max-w-[160px] items-center gap-2"
+      className="flex max-w-[170px] items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
-        onUpdateAmount(item.id, Number(value));
+        onUpdateAmount(item.id, parseNumberInputValue(value));
       }}
     >
       <input
@@ -32,11 +36,11 @@ export function AmountEditor({ item, onUpdateAmount }: AmountEditorProps) {
         onChange={(event) => setValue(event.target.value)}
       />
       <button
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d8d4cc] bg-white text-[#58534c] transition hover:border-[#aaa398]"
+        className="inline-flex h-8 items-center justify-center rounded-md border border-[#d8d4cc] bg-white px-3 text-xs font-semibold text-[#58534c] transition hover:border-[#aaa398] hover:bg-[#f7f6f3]"
         title="Update current amount"
         type="submit"
       >
-        <Check size={14} />
+        Save
       </button>
     </form>
   );

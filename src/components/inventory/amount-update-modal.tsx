@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { isLowStock } from "@/lib/utils";
+import { getNumberInputValue, isLowStock, parseNumberInputValue } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 
 type AmountUpdateModalProps = {
@@ -17,8 +17,8 @@ export function AmountUpdateModal({
   onClose,
   onUpdateAmount,
 }: AmountUpdateModalProps) {
-  const [amount, setAmount] = useState(String(item.currentAmount));
-  const nextItem = { ...item, currentAmount: Number(amount) };
+  const [amount, setAmount] = useState(getNumberInputValue(item.currentAmount));
+  const nextItem = { ...item, currentAmount: parseNumberInputValue(amount) };
 
   return (
     <Modal title="Update Amount" subtitle={item.name} onClose={onClose}>
@@ -26,7 +26,7 @@ export function AmountUpdateModal({
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
-          onUpdateAmount(item.id, Number(amount));
+          onUpdateAmount(item.id, parseNumberInputValue(amount));
           onClose();
         }}
       >
