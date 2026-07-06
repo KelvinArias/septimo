@@ -7,10 +7,10 @@ import {
   isLowStock,
   parseNumberInputValue,
 } from "@/lib/utils";
-import type { InventoryItem } from "@/types";
+import type { PreparationItem } from "@/types";
 
 type AmountEditorProps = {
-  item: InventoryItem;
+  item: PreparationItem;
   onUpdateAmount: (id: string, amount: number) => void;
 };
 

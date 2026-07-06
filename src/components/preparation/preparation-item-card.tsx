@@ -6,23 +6,23 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { LowStockBadge } from "@/components/ui/status-badge";
 import { classNames, isLowStock } from "@/lib/utils";
-import type { InventoryItem } from "@/types";
+import type { PreparationItem } from "@/types";
 
-type InventoryItemCardProps = {
-  item: InventoryItem;
+type PreparationItemCardProps = {
+  item: PreparationItem;
   onDelete: (id: string) => void;
-  onEdit: (item: InventoryItem) => void;
+  onEdit: (item: PreparationItem) => void;
   onUpdateAmount: (id: string, amount: number) => void;
-  onView: (item: InventoryItem) => void;
+  onView: (item: PreparationItem) => void;
 };
 
-export function InventoryItemCard({
+export function PreparationItemCard({
   item,
   onDelete,
   onEdit,
   onUpdateAmount,
   onView,
-}: InventoryItemCardProps) {
+}: PreparationItemCardProps) {
   const low = isLowStock(item);
   const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
 
@@ -83,15 +83,15 @@ export function InventoryItemCard({
           >
             <Pencil size={14} /> Edit
           </Button>
-          <IconButton label="View item details" onClick={() => onView(item)}>
+          <IconButton label="View preparation details" onClick={() => onView(item)}>
             <Eye className="lg:hidden" size={15} />
             <Search className="hidden lg:block" size={15} />
           </IconButton>
-          <IconButton label="Delete item" onClick={() => onDelete(item.id)}>
+          <IconButton label="Delete preparation" onClick={() => onDelete(item.id)}>
             <Trash2 size={15} />
           </IconButton>
           <div className="hidden lg:flex lg:gap-1">
-            <IconButton label="Edit item" onClick={() => onEdit(item)}>
+            <IconButton label="Edit preparation" onClick={() => onEdit(item)}>
               <Pencil size={15} />
             </IconButton>
           </div>

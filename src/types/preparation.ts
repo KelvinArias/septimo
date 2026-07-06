@@ -1,10 +1,11 @@
-export type InventoryCategory =
-  | "Pre-batch"
+export type PreparationCategory =
   | "Cordial"
-  | "Foam"
   | "Syrup"
-  | "Juice"
-  | "Garnish"
+  | "Foam"
+  | "Carbonated Drink"
+  | "Pre-Batch"
+  | "Infusion"
+  | "Mix"
   | "Other";
 
 export type Unit = "quantity" | "g" | "oz" | "ml" | "L" | "bottles" | "units";
@@ -15,14 +16,18 @@ export type Ingredient = {
   unit: Unit;
 };
 
-export type InventoryItem = {
+export type PreparationItem = {
   id: string;
   name: string;
-  category: InventoryCategory;
+  category: PreparationCategory;
   currentAmount: number;
   minimumAmount: number;
   unit: Unit;
   ingredients: Ingredient[];
+  prepInstructions?: string;
+  shelfLife?: string;
+  dateMade?: string;
+  expirationDate?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;

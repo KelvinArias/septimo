@@ -1,9 +1,9 @@
-import type { InventoryCategory, InventoryItem, Task } from "@/types";
+import type { PreparationCategory, PreparationItem, Task } from "@/types";
 import { emptyIngredient } from "./constants";
 
-export type InventoryFilterState = {
+export type PreparationFilterState = {
   search: string;
-  category: "All" | InventoryCategory;
+  category: "All" | PreparationCategory;
   lowOnly: boolean;
 };
 
@@ -21,7 +21,7 @@ export function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
-export function isLowStock(item: InventoryItem) {
+export function isLowStock(item: PreparationItem) {
   return item.currentAmount <= item.minimumAmount;
 }
 
@@ -33,7 +33,7 @@ export function parseNumberInputValue(value: string) {
   return value === "" ? 0 : Number(value);
 }
 
-export function searchInventoryItems(items: InventoryItem[], search: string) {
+export function searchPreparationItems(items: PreparationItem[], search: string) {
   const normalizedSearch = search.trim().toLowerCase();
 
   if (!normalizedSearch) {
@@ -48,8 +48,8 @@ export function searchInventoryItems(items: InventoryItem[], search: string) {
   );
 }
 
-export function filterInventoryItems(items: InventoryItem[], filters: InventoryFilterState) {
-  return searchInventoryItems(items, filters.search).filter((item) => {
+export function filterPreparationItems(items: PreparationItem[], filters: PreparationFilterState) {
+  return searchPreparationItems(items, filters.search).filter((item) => {
     const matchesCategory = filters.category === "All" || item.category === filters.category;
     const matchesLowStock = !filters.lowOnly || isLowStock(item);
 
@@ -72,7 +72,7 @@ export function slugify(value: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export function createLowStockTask(item: InventoryItem): Task {
+export function createLowStockTask(item: PreparationItem): Task {
   return {
     id: `auto-${item.id}`,
     title: item.name,
@@ -82,18 +82,22 @@ export function createLowStockTask(item: InventoryItem): Task {
     )}${item.unit} to bring levels up.`,
     status: "pending",
     createdAt: new Date().toISOString(),
-    linkedInventoryItemId: item.id,
+    linkedPreparationItemId: item.id,
   };
 }
 
-export function getGeneratedLowStockTasks(items: InventoryItem[], tasks: Task[]) {
+export function getTaskPreparationItemId(task: Task) {
+  return task.linkedPreparationItemId ?? task.linkedInventoryItemId;
+}
+
+export function getGeneratedLowStockTasks(items: PreparationItem[], tasks: Task[]) {
   return items
     .filter(isLowStock)
-    .filter((item) => !tasks.some((task) => task.linkedInventoryItemId === item.id))
+    .filter((item) => !tasks.some((task) => getTaskPreparationItemId(task) === item.id))
     .map(createLowStockTask);
 }
 
-export function createInventoryItemDraft(): InventoryItem {
+export function createPreparationItemDraft(): PreparationItem {
   return {
     id: "",
     name: "",
@@ -118,8 +122,8 @@ export function createTaskDraft(): Task {
   };
 }
 
-export function prepareInventoryItemForSave(item: InventoryItem): {
-  item: InventoryItem;
+export function preparePreparationItemForSave(item: PreparationItem): {
+  item: PreparationItem;
   isNew: boolean;
 } {
   const now = new Date().toISOString();
@@ -129,7 +133,7 @@ export function prepareInventoryItemForSave(item: InventoryItem): {
     isNew,
     item: {
       ...item,
-      id: item.id || `inv-${slugify(item.name)}-${Date.now()}`,
+      id: item.id || `prep-${slugify(item.name)}-${Date.now()}`,
       ingredients: item.ingredients.filter(
         (ingredient) => ingredient.name.trim() && ingredient.amount > 0,
       ),

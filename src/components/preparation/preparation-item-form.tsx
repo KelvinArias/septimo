@@ -5,26 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { SelectControl } from "@/components/ui/select-control";
-import { inventoryCategories, units } from "@/lib/constants";
+import { preparationCategories, units } from "@/lib/constants";
 import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
-import type { InventoryCategory, InventoryItem, Unit } from "@/types";
+import type { PreparationCategory, PreparationItem, Unit } from "@/types";
 
-type InventoryItemFormProps = {
-  item: InventoryItem;
-  onChange: (item: InventoryItem) => void;
+type PreparationItemFormProps = {
+  item: PreparationItem;
+  onChange: (item: PreparationItem) => void;
   onClose: () => void;
   onSave: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export function InventoryItemForm({
+export function PreparationItemForm({
   item,
   onChange,
   onClose,
   onSave,
-}: InventoryItemFormProps) {
+}: PreparationItemFormProps) {
   return (
     <Modal
-      title={item.id ? "Edit Item" : "Add Inventory Item"}
+      title={item.id ? "Edit Preparation" : "Add Preparation"}
       subtitle={item.name || undefined}
       onClose={onClose}
     >
@@ -43,10 +43,10 @@ export function InventoryItemForm({
             <SelectControl
               value={item.category}
               onChange={(event) =>
-                onChange({ ...item, category: event.target.value as InventoryCategory })
+                onChange({ ...item, category: event.target.value as PreparationCategory })
               }
             >
-              {inventoryCategories.map((value) => (
+              {preparationCategories.map((value) => (
                 <option key={value}>{value}</option>
               ))}
             </SelectControl>
@@ -113,7 +113,7 @@ export function InventoryItemForm({
             Cancel
           </Button>
           <Button type="submit">
-            <Plus size={16} /> {item.id ? "Save Changes" : "Add Item"}
+            <Plus size={16} /> {item.id ? "Save Changes" : "Add Preparation"}
           </Button>
         </div>
       </form>

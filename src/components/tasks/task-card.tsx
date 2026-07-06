@@ -1,18 +1,19 @@
 import { AlertTriangle, Check, Pencil, Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
-import { classNames, formatDate } from "@/lib/utils";
-import type { InventoryItem, Task } from "@/types";
+import { classNames, formatDate, getTaskPreparationItemId } from "@/lib/utils";
+import type { PreparationItem, Task } from "@/types";
 
 type TaskCardProps = {
-  inventory: InventoryItem[];
+  preparations: PreparationItem[];
   task: Task;
   onComplete: (task: Task) => void;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
 };
 
-export function TaskCard({ inventory, task, onComplete, onDelete, onEdit }: TaskCardProps) {
-  const item = inventory.find((inventoryItem) => inventoryItem.id === task.linkedInventoryItemId);
+export function TaskCard({ preparations, task, onComplete, onDelete, onEdit }: TaskCardProps) {
+  const linkedPreparationId = getTaskPreparationItemId(task);
+  const item = preparations.find((preparation) => preparation.id === linkedPreparationId);
   return (
     <div
       className={classNames(

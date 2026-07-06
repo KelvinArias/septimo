@@ -1,8 +1,8 @@
 export type {
   Ingredient,
-  InventoryCategory,
-  InventoryItem,
+  PreparationCategory,
+  PreparationItem,
   Unit,
-} from "./inventory";
+} from "./preparation";
 export type { Task, TaskStatus } from "./task";
 export type { AppView } from "./common";

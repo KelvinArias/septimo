@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Septimo PI Bar Inventory",
-  description: "Restaurant prep inventory and barback task dashboard.",
+  title: "Septimo PI Bar Operations",
+  description: "Restaurant preparation and barback task dashboard.",
 };
 
 export default function RootLayout({

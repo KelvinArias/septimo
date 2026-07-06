@@ -12,7 +12,7 @@ export function MobileNav({ activeView, onViewChange }: MobileNavProps) {
       value={activeView}
       onChange={(event) => onViewChange(event.target.value as AppView)}
     >
-      <option value="inventory">Inventory</option>
+      <option value="preparation">Preparation</option>
       <option value="tasks">Tasks</option>
       <option value="completed">Completed</option>
     </select>

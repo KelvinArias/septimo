@@ -1,11 +1,12 @@
 import { AlertTriangle } from "lucide-react";
 import { TaskCard } from "./task-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { InventoryItem, Task } from "@/types";
+import { getTaskPreparationItemId } from "@/lib/utils";
+import type { PreparationItem, Task } from "@/types";
 
 type TaskListProps = {
   generatedCount: number;
-  inventory: InventoryItem[];
+  preparations: PreparationItem[];
   tasks: Task[];
   onComplete: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -14,27 +15,27 @@ type TaskListProps = {
 
 export function TaskList({
   generatedCount,
-  inventory,
+  preparations,
   tasks,
   onComplete,
   onDelete,
   onEdit,
 }: TaskListProps) {
-  const lowStockTasks = tasks.filter((task) => task.linkedInventoryItemId);
-  const generalTasks = tasks.filter((task) => !task.linkedInventoryItemId);
+  const lowStockTasks = tasks.filter(getTaskPreparationItemId);
+  const generalTasks = tasks.filter((task) => !getTaskPreparationItemId(task));
 
   return (
     <div className="space-y-7 px-4 py-5 md:px-5 lg:px-7">
       {lowStockTasks.length > 0 && (
         <section>
           <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c45500]">
-            <AlertTriangle size={14} /> Low Stock - {lowStockTasks.length} Tasks
+            <AlertTriangle size={14} /> Low Prep - {lowStockTasks.length} Tasks
           </h3>
           <div className="space-y-3">
             {lowStockTasks.map((task) => (
               <TaskCard
                 key={task.id}
-                inventory={inventory}
+                preparations={preparations}
                 task={task}
                 onComplete={onComplete}
                 onDelete={onDelete}
@@ -53,7 +54,7 @@ export function TaskList({
           {generalTasks.map((task) => (
             <TaskCard
               key={task.id}
-              inventory={inventory}
+              preparations={preparations}
               task={task}
               onComplete={onComplete}
               onDelete={onDelete}

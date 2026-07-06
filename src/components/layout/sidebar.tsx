@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Package } from "lucide-react";
+import { CheckCircle2, ClipboardList, FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
 import { classNames } from "@/lib/utils";
 import type { AppView } from "@/types";
@@ -16,14 +16,14 @@ export function Sidebar({ activeView, pendingTaskCount, onViewChange }: SidebarP
         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
           Septimo PI
         </p>
-        <h1 className="mt-1 text-sm font-semibold">Bar Inventory</h1>
+        <h1 className="mt-1 text-sm font-semibold">Bar Operations</h1>
       </div>
       <nav className="flex-1 space-y-2 px-3 py-4">
         <NavButton
-          active={activeView === "inventory"}
-          icon={<Package size={16} />}
-          label="Inventory"
-          onClick={() => onViewChange("inventory")}
+          active={activeView === "preparation"}
+          icon={<FlaskConical size={16} />}
+          label="Preparation"
+          onClick={() => onViewChange("preparation")}
         />
         <NavButton
           active={activeView === "tasks"}

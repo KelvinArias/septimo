@@ -4,15 +4,15 @@ import { Metric } from "@/components/ui/metric";
 import { Modal } from "@/components/ui/modal";
 import { LowStockBadge } from "@/components/ui/status-badge";
 import { formatDate, isLowStock } from "@/lib/utils";
-import type { InventoryItem } from "@/types";
+import type { PreparationItem } from "@/types";
 
-type InventoryItemDetailsProps = {
-  item: InventoryItem;
+type PreparationItemDetailsProps = {
+  item: PreparationItem;
   onClose: () => void;
   onEdit: () => void;
 };
 
-export function InventoryItemDetails({ item, onClose, onEdit }: InventoryItemDetailsProps) {
+export function PreparationItemDetails({ item, onClose, onEdit }: PreparationItemDetailsProps) {
   return (
     <Modal
       title={item.name}
@@ -57,7 +57,7 @@ export function InventoryItemDetails({ item, onClose, onEdit }: InventoryItemDet
             Close
           </Button>
           <Button onClick={onEdit}>
-            <Pencil size={16} /> Edit Item
+            <Pencil size={16} /> Edit Preparation
           </Button>
         </div>
       </div>

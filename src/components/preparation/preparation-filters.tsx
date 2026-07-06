@@ -1,30 +1,30 @@
 import { Filter } from "lucide-react";
-import { InventorySearch } from "./inventory-search";
+import { PreparationSearch } from "./preparation-search";
 import { SelectControl } from "@/components/ui/select-control";
-import { inventoryCategories } from "@/lib/constants";
+import { preparationCategories } from "@/lib/constants";
 import { classNames } from "@/lib/utils";
-import type { InventoryCategory } from "@/types";
+import type { PreparationCategory } from "@/types";
 
-type InventoryFiltersProps = {
-  category: "All" | InventoryCategory;
+type PreparationFiltersProps = {
+  category: "All" | PreparationCategory;
   lowOnly: boolean;
   search: string;
-  onCategoryChange: (category: "All" | InventoryCategory) => void;
+  onCategoryChange: (category: "All" | PreparationCategory) => void;
   onLowOnlyChange: (value: boolean) => void;
   onSearchChange: (value: string) => void;
 };
 
-export function InventoryFilters({
+export function PreparationFilters({
   category,
   lowOnly,
   search,
   onCategoryChange,
   onLowOnlyChange,
   onSearchChange,
-}: InventoryFiltersProps) {
+}: PreparationFiltersProps) {
   return (
     <div className="mb-5 flex min-w-0 flex-wrap items-center gap-2">
-      <InventorySearch
+      <PreparationSearch
         className="md:max-w-[250px] w-full flex-[1_1_220px] md:mr-auto"
         search={search}
         onSearchChange={onSearchChange}
@@ -34,11 +34,11 @@ export function InventoryFilters({
         containerClassName="max-w-[175px] flex-[1_1_170px]"
         value={category}
         onChange={(event) =>
-          onCategoryChange(event.target.value as "All" | InventoryCategory)
+          onCategoryChange(event.target.value as "All" | PreparationCategory)
         }
       >
         <option value="All">All Categories</option>
-        {inventoryCategories.map((item) => (
+        {preparationCategories.map((item) => (
           <option key={item} value={item}>
             {item}
           </option>

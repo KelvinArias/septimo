@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { getNumberInputValue, isLowStock, parseNumberInputValue } from "@/lib/utils";
-import type { InventoryItem } from "@/types";
+import type { PreparationItem } from "@/types";
 
 type AmountUpdateModalProps = {
-  item: InventoryItem;
+  item: PreparationItem;
   onClose: () => void;
   onUpdateAmount: (id: string, amount: number) => void;
 };
@@ -43,7 +43,7 @@ export function AmountUpdateModal({
         {isLowStock(nextItem) && (
           <p className="flex items-center gap-2 rounded-md border border-[#f5d190] bg-[#fff8e8] px-3 py-2 text-xs text-[#c45500]">
             <AlertTriangle size={13} /> Below minimum of {item.minimumAmount} {item.unit} - a
-            task will be created automatically.
+            preparation task will be created automatically.
           </p>
         )}
         <div className="grid gap-2 border-t border-[#e4e0d8] pt-4 sm:grid-cols-2">

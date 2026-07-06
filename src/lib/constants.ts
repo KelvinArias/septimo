@@ -1,12 +1,13 @@
-import type { Ingredient, InventoryCategory, Unit } from "@/types";
+import type { Ingredient, PreparationCategory, Unit } from "@/types";
 
-export const inventoryCategories: InventoryCategory[] = [
-  "Pre-batch",
+export const preparationCategories: PreparationCategory[] = [
   "Cordial",
-  "Foam",
   "Syrup",
-  "Juice",
-  "Garnish",
+  "Foam",
+  "Carbonated Drink",
+  "Pre-Batch",
+  "Infusion",
+  "Mix",
   "Other",
 ];
 
