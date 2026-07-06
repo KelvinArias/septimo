@@ -1,3 +1,5 @@
+import type { Unit } from "./preparation";
+
 export type InventoryCategory =
   | "Fruit"
   | "Juice"
@@ -16,7 +18,7 @@ export type InventoryItem = {
   category: InventoryCategory;
   currentQuantity: number;
   minimumQuantity: number;
-  unit: string;
+  unit: Unit;
   dateAdded: string;
   updatedAt: string;
   expirationDate?: string;

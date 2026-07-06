@@ -19,6 +19,7 @@ import {
   createInventoryItemDraft,
   createPreparationItemDraft,
   createTaskDraft,
+  findDuplicateInventoryItem,
   filterInventoryItems,
   filterPreparationItems,
   getGeneratedLowStockTasks,
@@ -47,6 +48,7 @@ import type {
   PreparationCategory,
   PreparationItem,
   Task,
+  Unit,
 } from "@/types";
 
 export function RestaurantPrepDashboard() {
@@ -57,6 +59,7 @@ export function RestaurantPrepDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [inventoryNameError, setInventoryNameError] = useState<string | null>(null);
   const [inventorySearch, setInventorySearch] = useState("");
   const [inventoryCategory, setInventoryCategory] = useState<"All" | InventoryCategory>("All");
   const [inventoryLowOnly, setInventoryLowOnly] = useState(false);
@@ -144,6 +147,16 @@ export function RestaurantPrepDashboard() {
     if (!editingInventoryItem) return;
 
     const { item, isNew } = prepareInventoryItemForSave(editingInventoryItem);
+    const duplicate = findDuplicateInventoryItem(
+      inventoryItems,
+      item.name,
+      isNew ? undefined : item.id,
+    );
+
+    if (duplicate) {
+      setInventoryNameError(`"${duplicate.name}" already exists in inventory.`);
+      return;
+    }
 
     try {
       await saveInventoryItem(item, isNew);
@@ -151,13 +164,43 @@ export function RestaurantPrepDashboard() {
       setViewingInventoryItem(isNew ? null : item);
       setEditingInventoryItem(null);
       setApiMessage(null);
+      setInventoryNameError(null);
       setSuccessMessage(
         isNew ? `${item.name} was added to inventory.` : `${item.name} was updated.`,
       );
     } catch (error) {
       setApiMessage(getErrorMessage(error));
+      setInventoryNameError(getErrorMessage(error));
       setSuccessMessage(null);
     }
+  }
+
+  async function handleQuickCreateInventoryItem(
+    name: string,
+    category: InventoryCategory,
+    unit: Unit,
+  ) {
+    const draft = createInventoryItemDraft();
+    const { item } = prepareInventoryItemForSave({
+      ...draft,
+      name,
+      category,
+      unit,
+    });
+    const duplicate = findDuplicateInventoryItem(inventoryItems, item.name);
+
+    if (duplicate) {
+      throw new Error(`"${duplicate.name}" already exists in inventory.`);
+    }
+
+    const savedItem = await saveInventoryItem(item, true);
+
+    setInventoryItems((current) => upsertInventoryItem(current, savedItem));
+    setApiMessage(null);
+    setInventoryNameError(null);
+    setSuccessMessage(`${savedItem.name} was added to inventory.`);
+
+    return savedItem;
   }
 
   async function handleDeleteInventoryItem(itemId: string) {
@@ -402,8 +445,15 @@ export function RestaurantPrepDashboard() {
       {editingInventoryItem && (
         <InventoryItemForm
           item={editingInventoryItem}
-          onChange={setEditingInventoryItem}
-          onClose={() => setEditingInventoryItem(null)}
+          nameError={inventoryNameError ?? undefined}
+          onChange={(item) => {
+            setEditingInventoryItem(item);
+            setInventoryNameError(null);
+          }}
+          onClose={() => {
+            setEditingInventoryItem(null);
+            setInventoryNameError(null);
+          }}
           onSave={handleSaveInventoryItem}
         />
       )}
@@ -411,8 +461,10 @@ export function RestaurantPrepDashboard() {
       {editingPreparationItem && (
         <PreparationItemForm
           item={editingPreparationItem}
+          inventoryItems={inventoryItems}
           onChange={setEditingPreparationItem}
           onClose={() => setEditingPreparationItem(null)}
+          onQuickCreateInventoryItem={handleQuickCreateInventoryItem}
           onSave={handleSavePreparationItem}
         />
       )}

@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { SelectControl } from "@/components/ui/select-control";
+import { UnitSelect } from "@/components/ui/unit-select";
 import { inventoryCategories } from "@/lib/constants";
 import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
 import type { InventoryCategory, InventoryItem } from "@/types";
 
 type InventoryItemFormProps = {
   item: InventoryItem;
+  nameError?: string;
   onChange: (item: InventoryItem) => void;
   onClose: () => void;
   onSave: (event: FormEvent<HTMLFormElement>) => void;
@@ -17,6 +19,7 @@ type InventoryItemFormProps = {
 
 export function InventoryItemForm({
   item,
+  nameError,
   onChange,
   onClose,
   onSave,
@@ -36,6 +39,7 @@ export function InventoryItemForm({
             value={item.name}
             onChange={(event) => onChange({ ...item, name: event.target.value })}
           />
+          {nameError && <p className="mt-1 text-xs text-red-600">{nameError}</p>}
         </Field>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Category" required>
@@ -51,12 +55,9 @@ export function InventoryItemForm({
             </SelectControl>
           </Field>
           <Field label="Unit" required>
-            <input
-              className="input"
-              placeholder="bottles, cases, oz, kg"
-              required
+            <UnitSelect
               value={item.unit}
-              onChange={(event) => onChange({ ...item, unit: event.target.value })}
+              onChange={(unit) => onChange({ ...item, unit })}
             />
           </Field>
         </div>

@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { MongoConfigurationError } from "./mongodb";
 
+export class DuplicateInventoryNameError extends Error {
+  constructor(name: string) {
+    super(`An inventory item named "${name}" already exists.`);
+    this.name = "DuplicateInventoryNameError";
+  }
+}
+
 type ApiErrorBody = {
   error: string;
 };
@@ -8,6 +15,10 @@ type ApiErrorBody = {
 export function toApiErrorResponse(error: unknown) {
   if (error instanceof MongoConfigurationError) {
     return NextResponse.json<ApiErrorBody>({ error: error.message }, { status: 503 });
+  }
+
+  if (error instanceof DuplicateInventoryNameError) {
+    return NextResponse.json({ error: error.message }, { status: 409 });
   }
 
   if (isMongoConnectionError(error)) {

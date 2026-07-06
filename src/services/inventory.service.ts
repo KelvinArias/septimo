@@ -1,4 +1,6 @@
 import { getAppCollections } from "@/lib/mongodb";
+import { normalizeInventoryName, slugify } from "@/lib/utils";
+import { DuplicateInventoryNameError } from "@/lib/api-errors";
 import type { InventoryItem } from "@/types";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
@@ -12,18 +14,51 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
 
 export async function createInventoryItem(item: InventoryItem) {
   const collections = await getAppCollections();
+  const now = new Date().toISOString();
+  const itemForSave = {
+    ...item,
+    id: item.id || `raw-${slugify(item.name)}-${Date.now()}`,
+    name: item.name.trim(),
+    dateAdded: item.dateAdded || now,
+    updatedAt: now,
+  };
+  const existingItems = await getInventoryItems();
+  const duplicate = existingItems.find(
+    (currentItem) =>
+      normalizeInventoryName(currentItem.name) === normalizeInventoryName(itemForSave.name),
+  );
 
-  await collections.inventory.insertOne(item);
+  if (duplicate) {
+    throw new DuplicateInventoryNameError(itemForSave.name);
+  }
 
-  return item;
+  await collections.inventory.insertOne(itemForSave);
+
+  return itemForSave;
 }
 
 export async function updateInventoryItem(id: string, item: InventoryItem) {
   const collections = await getAppCollections();
+  const itemForSave = {
+    ...item,
+    id,
+    name: item.name.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  const existingItems = await getInventoryItems();
+  const duplicate = existingItems.find(
+    (currentItem) =>
+      currentItem.id !== id &&
+      normalizeInventoryName(currentItem.name) === normalizeInventoryName(itemForSave.name),
+  );
 
-  await collections.inventory.updateOne({ id }, { $set: item }, { upsert: true });
+  if (duplicate) {
+    throw new DuplicateInventoryNameError(itemForSave.name);
+  }
 
-  return item;
+  await collections.inventory.updateOne({ id }, { $set: itemForSave }, { upsert: true });
+
+  return itemForSave;
 }
 
 export async function deleteInventoryItem(id: string) {

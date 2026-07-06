@@ -1,16 +1,28 @@
 import { Plus, X } from "lucide-react";
+import { IngredientInventorySelector } from "./ingredient-inventory-selector";
 import { Button } from "@/components/ui/button";
-import { SelectControl } from "@/components/ui/select-control";
-import { emptyIngredient, units } from "@/lib/constants";
+import { UnitSelect } from "@/components/ui/unit-select";
+import { emptyIngredient } from "@/lib/constants";
 import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
-import type { Ingredient, Unit } from "@/types";
+import type { Ingredient, InventoryCategory, InventoryItem, Unit } from "@/types";
 
 type IngredientListProps = {
   ingredients: Ingredient[];
+  inventoryItems: InventoryItem[];
   onChange: (ingredients: Ingredient[]) => void;
+  onQuickCreateInventoryItem: (
+    name: string,
+    category: InventoryCategory,
+    unit: Unit,
+  ) => Promise<InventoryItem | null>;
 };
 
-export function IngredientList({ ingredients, onChange }: IngredientListProps) {
+export function IngredientList({
+  ingredients,
+  inventoryItems,
+  onChange,
+  onQuickCreateInventoryItem,
+}: IngredientListProps) {
   function updateIngredient(index: number, ingredient: Ingredient) {
     onChange(
       ingredients.map((current, currentIndex) =>
@@ -40,13 +52,11 @@ export function IngredientList({ ingredients, onChange }: IngredientListProps) {
             key={index}
             className="grid gap-2 rounded-md bg-[#f4f2ef] p-3 sm:grid-cols-[1fr_90px_92px_32px] sm:bg-transparent sm:p-0"
           >
-            <input
-              className="input"
-              placeholder="Ingredient name"
-              value={ingredient.name}
-              onChange={(event) =>
-                updateIngredient(index, { ...ingredient, name: event.target.value })
-              }
+            <IngredientInventorySelector
+              ingredient={ingredient}
+              inventoryItems={inventoryItems}
+              onChange={(nextIngredient) => updateIngredient(index, nextIngredient)}
+              onQuickCreateInventoryItem={onQuickCreateInventoryItem}
             />
             <input
               className="input"
@@ -62,19 +72,15 @@ export function IngredientList({ ingredients, onChange }: IngredientListProps) {
                 })
               }
             />
-            <SelectControl
+            <UnitSelect
               value={ingredient.unit}
-              onChange={(event) =>
+              onChange={(unit) =>
                 updateIngredient(index, {
                   ...ingredient,
-                  unit: event.target.value as Unit,
+                  unit,
                 })
               }
-            >
-              {units.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </SelectControl>
+            />
             <button
               className="inline-flex min-h-11 items-center justify-center rounded-md border border-[#d8d4cc] text-[#6b655d] sm:h-9 sm:min-h-9"
               title="Remove ingredient"

@@ -11,6 +11,7 @@ export type PreparationCategory =
 export type Unit = "quantity" | "g" | "oz" | "ml" | "L" | "bottles" | "units";
 
 export type Ingredient = {
+  inventoryItemId?: string;
   name: string;
   amount: number;
   unit: Unit;

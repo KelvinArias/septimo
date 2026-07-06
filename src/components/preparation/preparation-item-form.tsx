@@ -5,21 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { SelectControl } from "@/components/ui/select-control";
-import { preparationCategories, units } from "@/lib/constants";
+import { UnitSelect } from "@/components/ui/unit-select";
+import { preparationCategories } from "@/lib/constants";
 import { getNumberInputValue, parseNumberInputValue } from "@/lib/utils";
-import type { PreparationCategory, PreparationItem, Unit } from "@/types";
+import type { InventoryItem, PreparationCategory, PreparationItem, Unit } from "@/types";
 
 type PreparationItemFormProps = {
   item: PreparationItem;
+  inventoryItems: InventoryItem[];
   onChange: (item: PreparationItem) => void;
   onClose: () => void;
+  onQuickCreateInventoryItem: (
+    name: string,
+    category: InventoryItem["category"],
+    unit: Unit,
+  ) => Promise<InventoryItem | null>;
   onSave: (event: FormEvent<HTMLFormElement>) => void;
 };
 
 export function PreparationItemForm({
   item,
+  inventoryItems,
   onChange,
   onClose,
+  onQuickCreateInventoryItem,
   onSave,
 }: PreparationItemFormProps) {
   return (
@@ -52,14 +61,10 @@ export function PreparationItemForm({
             </SelectControl>
           </Field>
           <Field label="Unit" required>
-            <SelectControl
+            <UnitSelect
               value={item.unit}
-              onChange={(event) => onChange({ ...item, unit: event.target.value as Unit })}
-            >
-              {units.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </SelectControl>
+              onChange={(unit) => onChange({ ...item, unit })}
+            />
           </Field>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -100,13 +105,15 @@ export function PreparationItemForm({
           <textarea
             className="input min-h-20 resize-none py-3"
             placeholder="Shelf life, preparation tips, storage instructions..."
-            value={item.notes}
+            value={item.notes ?? ""}
             onChange={(event) => onChange({ ...item, notes: event.target.value })}
           />
         </Field>
         <IngredientList
           ingredients={item.ingredients}
+          inventoryItems={inventoryItems}
           onChange={(ingredients) => onChange({ ...item, ingredients })}
+          onQuickCreateInventoryItem={onQuickCreateInventoryItem}
         />
         <div className="grid gap-2 border-t border-[#e4e0d8] pt-4 sm:grid-cols-2">
           <Button variant="secondary" onClick={onClose}>

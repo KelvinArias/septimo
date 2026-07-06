@@ -50,6 +50,25 @@ export function parseNumberInputValue(value: string) {
   return value === "" ? 0 : Number(value);
 }
 
+export function normalizeInventoryName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+export function findDuplicateInventoryItem(
+  items: InventoryItem[],
+  name: string,
+  currentItemId?: string,
+) {
+  const normalizedName = normalizeInventoryName(name);
+
+  if (!normalizedName) return undefined;
+
+  return items.find(
+    (item) =>
+      item.id !== currentItemId && normalizeInventoryName(item.name) === normalizedName,
+  );
+}
+
 export function searchPreparationItems(items: PreparationItem[], search: string) {
   const normalizedSearch = search.trim().toLowerCase();
 
@@ -224,6 +243,7 @@ export function prepareInventoryItemForSave(item: InventoryItem): {
     isNew,
     item: {
       ...item,
+      name: item.name.trim(),
       id: item.id || `raw-${slugify(item.name)}-${Date.now()}`,
       dateAdded: item.dateAdded || now,
       updatedAt: now,
