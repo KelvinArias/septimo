@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toApiErrorResponse } from "@/lib/api-errors";
 import { createInventoryItem, getInventoryItems } from "@/services/inventory.service";
-import type { InventoryItem } from "@/types";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 export async function GET() {
   try {

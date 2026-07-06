@@ -1,4 +1,9 @@
-import type { Ingredient, InventoryCategory, PreparationCategory, Unit } from "@/types";
+import type { InventoryCategory } from "@/app/inventory/types/inventory";
+import type {
+  Ingredient,
+  PreparationCategory,
+} from "@/app/preparation/types/preparation";
+import type { Unit } from "@/types";
 
 export const inventoryCategories: InventoryCategory[] = [
   "Fruit",

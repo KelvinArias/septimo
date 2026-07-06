@@ -1,5 +1,5 @@
-import { getAppCollections } from "@/lib/mongodb";
-import type { PreparationItem } from "@/types";
+import { getAppCollections, withoutMongoId } from "@/lib/mongodb";
+import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 export async function getPreparationItems(): Promise<PreparationItem[]> {
   const collections = await getAppCollections();
@@ -21,7 +21,11 @@ export async function createPreparationItem(item: PreparationItem) {
 export async function updatePreparationItem(id: string, item: PreparationItem) {
   const collections = await getAppCollections();
 
-  await collections.preparations.updateOne({ id }, { $set: item }, { upsert: true });
+  await collections.preparations.updateOne(
+    { id },
+    { $set: withoutMongoId(item) },
+    { upsert: true },
+  );
 
   return item;
 }

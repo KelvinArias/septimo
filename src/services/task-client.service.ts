@@ -1,4 +1,4 @@
-import type { Task } from "@/types";
+import type { Task } from "@/app/tasks/types/task";
 
 export async function fetchTasks() {
   const response = await fetch("/api/tasks");

@@ -1,5 +1,5 @@
 import { CheckCircle2, X } from "lucide-react";
-import { classNames } from "@/lib/utils";
+import { classNames } from "@/utils";
 
 type ToastProps = {
   message: string;

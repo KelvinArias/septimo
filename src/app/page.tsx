@@ -1,5 +1,5 @@
-import { RestaurantPrepDashboard } from "@/components/restaurant-prep-dashboard";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <RestaurantPrepDashboard />;
+  redirect("/inventory");
 }

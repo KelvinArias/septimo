@@ -1,7 +1,8 @@
-import { getAppCollections } from "@/lib/mongodb";
-import { normalizeInventoryName, slugify } from "@/lib/utils";
+import { getAppCollections, withoutMongoId } from "@/lib/mongodb";
+import { normalizeInventoryName } from "@/app/inventory/utils/inventory.utils";
+import { slugify } from "@/utils";
 import { DuplicateInventoryNameError } from "@/lib/api-errors";
-import type { InventoryItem } from "@/types";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   const collections = await getAppCollections();
@@ -56,7 +57,11 @@ export async function updateInventoryItem(id: string, item: InventoryItem) {
     throw new DuplicateInventoryNameError(itemForSave.name);
   }
 
-  await collections.inventory.updateOne({ id }, { $set: itemForSave }, { upsert: true });
+  await collections.inventory.updateOne(
+    { id },
+    { $set: withoutMongoId(itemForSave) },
+    { upsert: true },
+  );
 
   return itemForSave;
 }

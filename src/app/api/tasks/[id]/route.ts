@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toApiErrorResponse } from "@/lib/api-errors";
 import { deleteTask, updateTask } from "@/services/task.service";
-import type { Task } from "@/types";
+import type { Task } from "@/app/tasks/types/task";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

@@ -1,1 +1,1 @@
-export type AppView = "inventory" | "preparation" | "tasks" | "completed";
+export type Unit = "quantity" | "g" | "oz" | "ml" | "L" | "bottles" | "units";

@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { classNames } from "@/lib/utils";
+import { classNames } from "@/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
 

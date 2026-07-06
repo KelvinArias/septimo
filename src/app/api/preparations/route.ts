@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toApiErrorResponse } from "@/lib/api-errors";
 import { createPreparationItem, getPreparationItems } from "@/services/preparation.service";
-import type { PreparationItem } from "@/types";
+import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 export async function GET() {
   try {

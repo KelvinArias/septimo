@@ -1,1 +1,1 @@
-export type { PreparationItem } from "@/types";
+export type { PreparationItem } from "@/app/preparation/types/preparation";

@@ -1,4 +1,4 @@
-import type { InventoryItem } from "@/types";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 export async function fetchInventoryItems() {
   const response = await fetch("/api/inventory");

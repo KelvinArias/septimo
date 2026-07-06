@@ -1,4 +1,4 @@
-import type { PreparationItem } from "@/types";
+import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 export async function fetchPreparationItems() {
   const response = await fetch("/api/preparations");

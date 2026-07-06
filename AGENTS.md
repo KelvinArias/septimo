@@ -1,728 +1,326 @@
-# AGENTS.md
+# Architecture
 
-## Project Philosophy
+The project follows a hybrid architecture that separates generic UI, shared application features, and route-specific features.
 
-This project should be built following modern software engineering principles with an emphasis on maintainability, scalability, readability, and reusability.
-
-The application should always favor **clean architecture** over quick implementations. Every feature should be easy to understand, extend, and maintain as the project grows.
+Every new feature must be placed in the correct layer.
 
 ---
 
-# Tech Stack
+# Architecture Hierarchy
 
-The project must use:
+The application is organized into four layers:
 
-- Next.js (App Router)
-- React
-- TypeScript
-- Tailwind CSS
-- MongoDB
-
----
-
-# General Development Rules
-
-## Keep pages thin
-
-Never place large amounts of code inside `app/page.tsx` or any route page.
-
-Pages should only be responsible for:
-
-- Loading data
-- Rendering page-level components
-- Handling routing logic
-- Passing props
-
-Pages should **not** contain:
-
-- Complex UI
-- Forms
-- Database logic
-- Business logic
-- Validation
-- Large JSX blocks
-
----
-
-## Modular Architecture
-
-Organize the project into reusable modules.
-
-Example structure:
-
-```text
-src/
-│
-├── app/
-│   ├── page.tsx
-│   ├── inventory/
-│   │   └── page.tsx
-│   └── tasks/
-│       └── page.tsx
-│
-├── components/
-│   ├── layout/
-│   ├── inventory/
-│   ├── tasks/
-│   ├── forms/
-│   ├── dialogs/
-│   ├── tables/
-│   └── ui/
-│
-├── lib/
-│   ├── mongodb.ts
-│   ├── constants.ts
-│   ├── validations.ts
-│   └── utils.ts
-│
-├── models/
-│   ├── InventoryItem.ts
-│   └── Task.ts
-│
-├── services/
-│   ├── inventory.service.ts
-│   └── task.service.ts
-│
-├── hooks/
-│
-├── types/
-│   ├── inventory.ts
-│   ├── task.ts
-│   └── common.ts
-│
-├── actions/
-│
-└── styles/
+```
+Generic Components
+        ↓
+Shared App Features
+        ↓
+Route Features
+        ↓
+Route Pages
 ```
 
+Each layer has a single responsibility.
+
 ---
 
-# Components
+# 1. Generic Components
 
-Build small reusable components.
+Location:
 
-Instead of one component with hundreds of lines, compose multiple focused components.
+```
+src/components/
+```
+
+Purpose:
+
+Reusable UI building blocks with **no business knowledge**.
+
+Examples:
+
+- Button
+- Badge
+- Card
+- Dialog
+- Modal
+- Input
+- Select
+- SearchBar
+- Table
+- LoadingSpinner
+- Banner
+- EmptyState
+
+A generic component should never know what Inventory, Preparation or Tasks are.
+
+If a component could be copied into another project without modification, it probably belongs here.
+
+---
+
+# 2. Shared Application Features
+
+Location:
+
+```
+src/app/features/
+```
+
+Purpose:
+
+Smart features that are reused by **multiple routes**.
+
+These features are composed using generic components.
+
+Examples:
+
+- Navigation
+- App Shell
+- Global Notifications
+- Global Search
+- Settings
+- Shared Toolbar
+- Shared Layout Sections
+
+A feature belongs here only if:
+
+- It is used by two or more routes.
+- The behavior is mostly identical.
+- It is not tightly coupled to one business domain.
+
+Do NOT place Inventory, Preparation or Task features here unless they are genuinely shared.
+
+---
+
+# 3. Route Features
+
+Each route owns its own feature folder.
 
 Example:
 
+```
+src/app/inventory/features/
+src/app/preparation/features/
+src/app/tasks/features/
+src/app/completed-tasks/features/
+```
+
+Purpose:
+
+Smart components that belong only to that route.
+
+Examples:
+
 Inventory
 
-- InventoryTable
+- InventoryToolbar
+- InventoryForm
 - InventoryCard
+- InventoryTable
 - InventoryFilters
-- InventorySearch
-- InventoryHeader
-- InventoryItemForm
-- IngredientList
-- IngredientRow
-- LowStockBadge
+
+Preparation
+
+- PreparationToolbar
+- PreparationForm
+- IngredientSelector
+- PreparationRecipeEditor
 
 Tasks
 
 - TaskList
 - TaskCard
 - TaskForm
-- TaskStatusBadge
-- TaskHeader
 
-Shared UI
+Completed Tasks
 
-- Button
-- Card
-- Badge
-- Modal
-- Dialog
-- Table
-- Input
-- Select
-- SearchBar
-- EmptyState
-- LoadingSpinner
+- CompletedTaskList
+- CompletedTaskCard
 
----
+These components may use:
 
-# Component Size
+- Generic components
+- Shared application features
 
-As a general guideline:
+They should NOT be shared unless they are nearly identical.
 
-- Components should ideally stay under **200 lines**.
-- If a component grows beyond **250–300 lines**, split it into smaller components.
-- A single file should have one clear responsibility.
+If two routes implement different behavior, they should each have their own feature.
+
+Avoid over-generalizing.
 
 ---
 
-# Business Logic
+# 4. Route Pages
 
-Business logic should never live inside components when it can be extracted.
-
-Examples:
-
-Instead of:
-
-```tsx
-if (currentAmount <= minimumAmount) {
-    ...
-}
-```
-
-Create:
-
-```ts
-isLowStock(item)
-```
-
-inside
-
-```text
-lib/utils.ts
-```
-
-The same applies for:
-
-- filtering
-- searching
-- sorting
-- calculations
-- validations
-
----
-
-# Database
-
-Never connect to MongoDB inside pages or UI components.
-
-MongoDB connection belongs in:
-
-```text
-src/lib/mongodb.ts
-```
-
-Database models belong in:
-
-```text
-src/models/
-```
-
-Data operations should be handled by services or server actions.
-
----
-
-# TypeScript
-
-Avoid using `any`.
-
-Always create explicit types.
+Each route owns its own page.
 
 Example:
 
-```ts
-export type Unit =
-    | "grams"
-    | "oz"
-    | "ml"
-    | "liters"
-    | "quantity"
-    | "bottles";
-
-export interface Ingredient {
-    name: string;
-    amount: number;
-    unit: Unit;
-}
-
-export interface InventoryItem {
-    id: string;
-    name: string;
-    category: string;
-    currentAmount: number;
-    minimumAmount: number;
-    unit: Unit;
-    ingredients: Ingredient[];
-}
+```
+src/app/inventory/page.tsx
+src/app/preparation/page.tsx
+src/app/tasks/page.tsx
+src/app/completed-tasks/page.tsx
 ```
 
-Shared types belong in:
+A page is responsible only for:
 
-```text
+- Loading data
+- Composing route features
+- Handling route-level concerns
+
+A page must NOT:
+
+- Contain business logic
+- Contain forms
+- Contain database logic
+- Render one giant shared dashboard component
+
+Every route should render its own features.
+
+Wrong:
+
+```
+Inventory Page
+        ↓
+RestaurantPrepDashboard
+```
+
+Correct:
+
+```
+Inventory Page
+        ↓
+InventoryToolbar
+InventoryFilters
+InventoryTable
+InventoryForm
+```
+
+Preparation should render Preparation features.
+
+Tasks should render Task features.
+
+Completed Tasks should render Completed Task features.
+
+---
+
+# Generic vs Shared vs Route-Specific
+
+When creating a new file, use this decision tree:
+
+Is it just UI?
+
+→ src/components
+
+↓
+
+Is it reused by multiple routes?
+
+→ src/app/features
+
+↓
+
+Does it belong to one route only?
+
+→ src/app/[route]/features
+
+↓
+
+Does it contain only route-level composition?
+
+→ src/app/[route]/page.tsx
+
+---
+
+# Types
+
+Shared types:
+
+```
 src/types/
 ```
 
----
-
-# Forms
-
-Forms should be isolated.
+Only place types here if they are reused across multiple domains.
 
 Examples:
 
-```
-InventoryItemForm
-TaskForm
-IngredientEditor
-```
+- Unit
+- ApiResponse
+- Pagination
+- SelectOption
 
-Avoid writing forms directly inside pages.
-
----
-
-# Styling
-
-Use Tailwind CSS.
-
-The design should feel like professional internal software used in luxury hotels or restaurants.
-
-Style principles:
-
-- Clean
-- Minimal
-- Elegant
-- Spacious
-- Consistent
-
-Avoid:
-
-- Large gradients
-- Glassmorphism
-- Heavy shadows
-- Neon colors
-- Excessive animations
-- Multiple accent colors
-
-Prefer:
-
-- Neutral backgrounds
-- Soft borders
-- Rounded corners
-- Consistent spacing
-- Good typography
-
----
-
-# Color Palette
-
-Keep the interface professional.
-
-Suggested colors:
-
-Background
-
-- White
-- Slate 50
-- Zinc 50
-
-Borders
-
-- Slate 200
-
-Primary
-
-- Slate 900
-
-Accent
-
-- Emerald
-- Blue
-
-Warnings
-
-- Amber
-
-Danger
-
-- Red
-
-Do not use more than one primary accent color.
-
----
-
-# Typography
-
-Use:
-
-- Inter
-- Geist
-
-Maintain consistent typography hierarchy.
-
-Example:
-
-- Page Title
-- Section Title
-- Card Title
-- Body
-- Caption
-
----
-
-# Naming Convention
-
-Use descriptive names.
-
-Good examples:
+Route-specific types belong inside:
 
 ```
-InventoryDashboard
-InventoryItemCard
-InventoryTable
-InventoryFilters
-InventoryItemForm
-
-TaskCard
-TaskList
-TaskForm
-
-StatusBadge
-SearchBar
-IngredientList
-```
-
-Avoid:
-
-```
-Box
-Data
-Component1
-Thing
-Object
+src/app/inventory/types/
+src/app/preparation/types/
+src/app/tasks/types/
 ```
 
 ---
 
-# File Naming
+# Utils
 
-Use:
+Shared utilities:
 
 ```
-inventory-table.tsx
-inventory-card.tsx
-task-card.tsx
-inventory.service.ts
+src/utils/
 ```
-
-Avoid inconsistent naming.
-
----
-
-# Reusability
-
-If code is repeated twice, consider extracting it.
-
-If code is repeated three times, extract it.
-
----
-
-# State Management
-
-Keep state close to where it is used.
-
-Avoid deeply nested prop drilling.
-
-When state becomes shared across multiple pages, consider a global state solution.
-
----
-
-# Performance
-
-Prefer:
-
-- Server Components when possible
-- Client Components only when necessary
-- Memoization only after identifying a real need
-- Lazy loading for large sections
-
-Avoid premature optimization.
-
----
-
-# Error Handling
-
-Handle expected errors gracefully.
 
 Examples:
 
-- Empty inventory
-- Database unavailable
-- Validation errors
-- Network errors
+- formatDate
+- debounce
+- formatNumber
 
-Provide clear user feedback.
+Inventory-specific utilities belong inside:
 
----
-
-# Future Scalability
-
-Write code assuming the application will eventually include:
-
-- Authentication
-- User roles
-- Multiple restaurants
-- Multiple locations
-- Inventory history
-- Audit logs
-- Reports
-- Analytics
-- Barcode support
-- QR codes
-- Notifications
-
-The architecture should make adding these features straightforward.
-
----
-
-# UI Consistency
-
-Maintain consistent spacing.
-
-Example spacing scale:
-
-- 4px
-- 8px
-- 12px
-- 16px
-- 24px
-- 32px
-
-Buttons should all share the same style.
-
-Cards should all share the same style.
-
-Dialogs should all share the same style.
-
----
-
-# Code Quality
-
-Prioritize:
-
-- Readability
-- Simplicity
-- Maintainability
-
-Avoid clever code that is difficult to understand.
-
-Code should be understandable by another developer without additional explanation.
-
----
-
-# Documentation
-
-Write meaningful comments only when necessary.
-
-Prefer self-explanatory function and variable names over excessive comments.
-
----
-
-# Final Objective
-
-The final product should resemble a professional internal operations dashboard rather than a demo project.
-
-Every new feature should follow these principles:
-
-- Modular
-- Reusable
-- Typed
-- Scalable
-- Easy to maintain
-- Cleanly designed
-- Consistent across the application
-
-When implementing new features, always consider how they fit into the overall architecture before writing code.
-
-# Vercel Deployment Agent
-
-## Role
-
-You are responsible for everything related to Vercel deployment for this Next.js project.
-
-Your responsibilities include:
-
-- Connecting the project to Vercel
-- Checking deployment readiness
-- Running production build checks
-- Reviewing environment variables
-- Checking MongoDB production configuration
-- Detecting deployment errors
-- Explaining errors clearly
-- Suggesting safe fixes
-- Keeping deployment configuration clean
-
-## Main Rule
-
-Do not rewrite unrelated code.
-
-Only make changes related to:
-
-- Vercel deployment
-- Build errors
-- Environment variables
-- Production configuration
-- MongoDB connection safety
-- Deployment documentation
-
-## Deployment Checklist
-
-Before saying the project is ready to deploy, check:
-
-1. The project builds successfully.
-2. TypeScript has no errors.
-3. Linting has no critical errors.
-4. Required environment variables are documented.
-5. MongoDB connection uses environment variables.
-6. No secrets are hardcoded.
-7. No `.env.local` file is committed.
-8. Vercel configuration is valid.
-9. Production URLs are correct.
-10. The app works with production environment variables.
-
-## Required Commands
-
-Run or verify these commands when possible:
-
-```bash
-npm install
-npm run lint
-npm run type-check
-npm run build
+```
+src/app/inventory/utils/
 ```
 
-If `type-check` does not exist in `package.json`, suggest adding:
+Preparation-specific utilities belong inside:
 
-```json
-{
-  "scripts": {
-    "type-check": "tsc --noEmit"
-  }
-}
+```
+src/app/preparation/utils/
 ```
 
+Never place route-specific logic inside shared utilities.
+
 ---
 
-## Environment Variables
+# Services
 
-Check for required environment variables.
+Services remain global.
 
-Common variables for this project:
-
-```env
-MONGODB_URI=
-NEXT_PUBLIC_APP_URL=
+```
+src/services/
 ```
 
-Rules:
+Examples:
 
-- Never commit `.env.local`.
-- Never hardcode secrets.
-- Never expose server-only secrets with `NEXT_PUBLIC_`.
-- Use `NEXT_PUBLIC_` only for values that are safe to be visible in the browser.
-- Add missing variables to `.env.example`.
-- Make sure Vercel has the same required variables configured.
+- inventory.service.ts
+- preparation.service.ts
+- task.service.ts
 
----
+Services are responsible for:
 
-## MongoDB Rules
+- Database operations
+- Business logic
+- Data persistence
 
-MongoDB connection logic should live in:
-
-```txt
-src/lib/mongodb.ts
-```
-
-The MongoDB URI must come from:
-
-```ts
-process.env.MONGODB_URI
-```
-
-Do not hardcode the MongoDB connection string.
-
-The app should fail gracefully if `MONGODB_URI` is missing.
+Services should never contain UI code.
 
 ---
 
-## Vercel Configuration
+# Final Rule
 
-Only create `vercel.json` if necessary.
+Every file should have a clear ownership.
 
-If needed, use a minimal configuration:
+A developer should be able to answer immediately:
 
-```json
-{
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "framework": "nextjs"
-}
-```
+- Is this generic?
+- Is this shared?
+- Is this route-specific?
 
-Do not add unnecessary Vercel settings.
-
----
-
-## Deployment Error Handling
-
-When a deployment fails, report:
-
-- What failed
-- Where it failed
-- Why it probably failed
-- Exact file involved
-- Suggested fix
-- Whether the fix is safe
-- Whether the issue is local or Vercel-specific
-
-Do not guess randomly.
-
-Read the error carefully before changing code.
-
----
-
-## Security Rules
-
-Never expose:
-
-- MongoDB URI
-- API keys
-- Tokens
-- Passwords
-- Private URLs
-- Service credentials
-
-Do not move private variables into client components.
-
-Do not use `NEXT_PUBLIC_` for secrets.
-
----
-
-## Build Safety Rules
-
-Before making changes:
-
-- Inspect the current file.
-- Understand the error.
-- Make the smallest safe fix.
-- Keep existing functionality.
-- Do not delete files unless clearly necessary.
-- Do not change UI unless the error is caused by UI code.
-- Do not replace the architecture unless absolutely required.
-
----
-
-## Final Report Format
-
-After every deployment-related task, respond with:
-
-```txt
-Vercel Deployment Report
-
-Status:
-Summary:
-Errors Found:
-Fixes Applied:
-Environment Variables Needed:
-Next Steps:
-```
-
----
-
-## Final Goal
-
-The project should be easy to deploy, safe for production, and ready to run on Vercel without exposing secrets or breaking the current Next.js application.
+If the answer is not obvious, the architecture should be reconsidered before writing code.

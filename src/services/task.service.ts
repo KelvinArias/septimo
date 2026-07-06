@@ -1,5 +1,5 @@
-import { getAppCollections } from "@/lib/mongodb";
-import type { Task } from "@/types";
+import { getAppCollections, withoutMongoId } from "@/lib/mongodb";
+import type { Task } from "@/app/tasks/types/task";
 
 export async function getTasks(): Promise<Task[]> {
   const collections = await getAppCollections();
@@ -21,7 +21,11 @@ export async function createTask(task: Task) {
 export async function updateTask(id: string, task: Task) {
   const collections = await getAppCollections();
 
-  await collections.tasks.updateOne({ id }, { $set: task }, { upsert: true });
+  await collections.tasks.updateOne(
+    { id },
+    { $set: withoutMongoId(task) },
+    { upsert: true },
+  );
 
   return task;
 }

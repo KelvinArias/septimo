@@ -1,10 +1,16 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import type { InventoryItem, PreparationItem, Task } from "@/types";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
+import type { PreparationItem } from "@/app/preparation/types/preparation";
+import type { Task } from "@/app/tasks/types/task";
 
 type MongoRuntimeConfig = {
   databaseName: string;
   environment: "development" | "production";
   uri: string;
+};
+
+type DocumentWithMongoId<T extends object> = T & {
+  _id?: unknown;
 };
 
 export class MongoConfigurationError extends Error {
@@ -55,6 +61,13 @@ export function getMongoClient() {
   }
 
   return clientPromise;
+}
+
+export function withoutMongoId<T extends object>(document: DocumentWithMongoId<T>) {
+  const documentWithoutMongoId = { ...document };
+  delete documentWithoutMongoId._id;
+
+  return documentWithoutMongoId;
 }
 
 export async function getAppCollections() {

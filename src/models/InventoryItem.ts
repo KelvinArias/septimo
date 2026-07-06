@@ -1,1 +1,1 @@
-export type { InventoryItem } from "@/types";
+export type { InventoryItem } from "@/app/inventory/types/inventory";

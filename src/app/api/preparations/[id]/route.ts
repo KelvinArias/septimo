@@ -4,7 +4,7 @@ import {
   deletePreparationItem,
   updatePreparationItem,
 } from "@/services/preparation.service";
-import type { PreparationItem } from "@/types";
+import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

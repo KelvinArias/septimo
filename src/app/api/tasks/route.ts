@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toApiErrorResponse } from "@/lib/api-errors";
 import { createTask, getTasks } from "@/services/task.service";
-import type { Task } from "@/types";
+import type { Task } from "@/app/tasks/types/task";
 
 export async function GET() {
   try {

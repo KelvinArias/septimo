@@ -1,1 +1,1 @@
-export type { Task } from "@/types";
+export type { Task } from "@/app/tasks/types/task";

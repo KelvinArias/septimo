@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toApiErrorResponse } from "@/lib/api-errors";
 import { deleteInventoryItem, updateInventoryItem } from "@/services/inventory.service";
-import type { InventoryItem } from "@/types";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import type { SelectHTMLAttributes } from "react";
-import { classNames } from "@/lib/utils";
+import { classNames } from "@/utils";
 
 type SelectControlProps = SelectHTMLAttributes<HTMLSelectElement> & {
   containerClassName?: string;
