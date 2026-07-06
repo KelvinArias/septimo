@@ -1,0 +1,116 @@
+import { Plus } from "lucide-react";
+import type { FormEvent } from "react";
+import { IngredientList } from "./ingredient-list";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Modal } from "@/components/ui/modal";
+import { inventoryCategories, units } from "@/lib/constants";
+import type { InventoryCategory, InventoryItem, Unit } from "@/types";
+
+type InventoryItemFormProps = {
+  item: InventoryItem;
+  onChange: (item: InventoryItem) => void;
+  onClose: () => void;
+  onSave: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+export function InventoryItemForm({
+  item,
+  onChange,
+  onClose,
+  onSave,
+}: InventoryItemFormProps) {
+  return (
+    <Modal
+      title={item.id ? "Edit Item" : "Add Inventory Item"}
+      subtitle={item.name || undefined}
+      onClose={onClose}
+    >
+      <form className="space-y-4" onSubmit={onSave}>
+        <Field label="Name" required>
+          <input
+            className="input"
+            placeholder="e.g. Passion Fruit Cordial"
+            required
+            value={item.name}
+            onChange={(event) => onChange({ ...item, name: event.target.value })}
+          />
+        </Field>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Category" required>
+            <select
+              className="input"
+              value={item.category}
+              onChange={(event) =>
+                onChange({ ...item, category: event.target.value as InventoryCategory })
+              }
+            >
+              {inventoryCategories.map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Unit" required>
+            <select
+              className="input"
+              value={item.unit}
+              onChange={(event) => onChange({ ...item, unit: event.target.value as Unit })}
+            >
+              {units.map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Current Amount" required>
+            <input
+              className="input"
+              min="0"
+              required
+              step="0.1"
+              type="number"
+              value={item.currentAmount}
+              onChange={(event) =>
+                onChange({ ...item, currentAmount: Number(event.target.value) })
+              }
+            />
+          </Field>
+          <Field label="Minimum Required" required>
+            <input
+              className="input"
+              min="0"
+              required
+              step="0.1"
+              type="number"
+              value={item.minimumAmount}
+              onChange={(event) =>
+                onChange({ ...item, minimumAmount: Number(event.target.value) })
+              }
+            />
+          </Field>
+        </div>
+        <Field label="Notes">
+          <textarea
+            className="input min-h-20 resize-none py-3"
+            placeholder="Shelf life, preparation tips, storage instructions..."
+            value={item.notes}
+            onChange={(event) => onChange({ ...item, notes: event.target.value })}
+          />
+        </Field>
+        <IngredientList
+          ingredients={item.ingredients}
+          onChange={(ingredients) => onChange({ ...item, ingredients })}
+        />
+        <div className="grid gap-2 border-t border-[#e4e0d8] pt-4 sm:grid-cols-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            <Plus size={16} /> {item.id ? "Save Changes" : "Add Item"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
