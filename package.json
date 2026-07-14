@@ -1,13 +1,21 @@
 {
   "name": "septimopi",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "seed:edit": "npm run inventory:seed",
+    "seed:reset": "npm run inventory:reset",
+    "seed:delete": "npm run inventory:delete",
+    "inventory:seed": "node --experimental-strip-types scripts/inventory-seed.mts seed",
+    "inventory:reset": "node --experimental-strip-types scripts/inventory-seed.mts reset",
+    "inventory:delete": "node --experimental-strip-types scripts/inventory-seed.mts delete",
     "test": "vitest run",
+    "typecheck": "npm run type-check",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

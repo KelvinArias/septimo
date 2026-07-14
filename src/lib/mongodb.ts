@@ -1,7 +1,7 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import type { InventoryItem } from "@/app/inventory/types/inventory";
-import type { PreparationItem } from "@/app/preparation/types/preparation";
-import type { Task } from "@/app/tasks/types/task";
+import type { InventoryItem } from "../app/inventory/types/inventory";
+import type { PreparationItem } from "../app/preparation/types/preparation";
+import type { Task } from "../app/tasks/types/task";
 
 type MongoRuntimeConfig = {
   databaseName: string;
@@ -61,6 +61,15 @@ export function getMongoClient() {
   }
 
   return clientPromise;
+}
+
+export async function closeMongoClient() {
+  if (client) {
+    await client.close();
+  }
+
+  client = null;
+  clientPromise = null;
 }
 
 export function withoutMongoId<T extends object>(document: DocumentWithMongoId<T>) {

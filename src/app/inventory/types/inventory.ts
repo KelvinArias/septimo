@@ -1,4 +1,4 @@
-import type { Unit } from "@/types";
+import type { Unit } from "../../../types";
 
 export type InventoryCategory =
   | "Fruit"
@@ -29,4 +29,7 @@ export type InventoryItem = {
   costPerUnit?: number;
   sku?: string;
   active: boolean;
+  isSeed?: boolean;
+  seedSource?: string;
+  seedId?: string;
 };
