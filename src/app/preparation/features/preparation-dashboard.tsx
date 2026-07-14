@@ -2,6 +2,7 @@ import { PreparationFilters } from "./preparation-filters";
 import { PreparationTable } from "./preparation-table";
 import type { PreparationFilterState } from "@/app/preparation/utils/preparation.utils";
 import type { PreparationCategory, PreparationItem } from "@/app/preparation/types/preparation";
+import type { StockStatusFilter } from "@/utils";
 
 type PreparationDashboardProps = {
   filters: PreparationFilterState;
@@ -9,7 +10,7 @@ type PreparationDashboardProps = {
   onCategoryChange: (category: "All" | PreparationCategory) => void;
   onDelete: (id: string) => void;
   onEdit: (item: PreparationItem) => void;
-  onLowOnlyChange: (value: boolean) => void;
+  onStockStatusChange: (status: StockStatusFilter) => void;
   onSearchChange: (value: string) => void;
   onUpdateAmount: (id: string, amount: number) => void;
   onView: (item: PreparationItem) => void;
@@ -21,7 +22,7 @@ export function PreparationDashboard({
   onCategoryChange,
   onDelete,
   onEdit,
-  onLowOnlyChange,
+  onStockStatusChange,
   onSearchChange,
   onUpdateAmount,
   onView,
@@ -30,11 +31,11 @@ export function PreparationDashboard({
     <div className="w-full min-w-0 max-w-full overflow-x-hidden px-4 py-5 md:px-5 lg:px-7">
       <PreparationFilters
         category={filters.category}
-        lowOnly={filters.lowOnly}
         search={filters.search}
+        stockStatus={filters.stockStatus}
         onCategoryChange={onCategoryChange}
-        onLowOnlyChange={onLowOnlyChange}
         onSearchChange={onSearchChange}
+        onStockStatusChange={onStockStatusChange}
       />
       <PreparationTable
         items={items}

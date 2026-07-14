@@ -18,6 +18,7 @@ import {
   findDuplicateInventoryItem,
   filterInventoryItems,
   isInventoryLowStock,
+  isInventoryOutOfStock,
   prepareInventoryItemForSave,
 } from "@/app/inventory/utils/inventory.utils";
 import { getGeneratedLowStockTasks } from "@/app/tasks/utils/task.utils";
@@ -30,6 +31,7 @@ import {
 } from "@/services/inventory-client.service";
 import { fetchPreparationItems } from "@/services/preparation-client.service";
 import { fetchTasks } from "@/services/task-client.service";
+import type { StockStatusFilter } from "@/utils";
 
 export function InventoryPageContent() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -40,7 +42,7 @@ export function InventoryPageContent() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"All" | InventoryCategory>("All");
-  const [lowOnly, setLowOnly] = useState(false);
+  const [stockStatus, setStockStatus] = useState<StockStatusFilter>("All");
   const [activeOnly, setActiveOnly] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [viewingItem, setViewingItem] = useState<InventoryItem | null>(null);
@@ -81,11 +83,12 @@ export function InventoryPageContent() {
   }, [successMessage]);
 
   const lowItems = useMemo(() => items.filter(isInventoryLowStock), [items]);
+  const outOfStockItems = useMemo(() => items.filter(isInventoryOutOfStock), [items]);
   const filteredItems = filterInventoryItems(items, {
     activeOnly,
     category,
-    lowOnly,
     search,
+    stockStatus,
   });
 
   async function handleSaveItem(event: FormEvent<HTMLFormElement>) {
@@ -164,21 +167,21 @@ export function InventoryPageContent() {
         </Button>
       }
       pendingTaskCount={pendingTaskCount}
-      subtitle={`${items.length} raw items - ${lowItems.length} low stock`}
+      subtitle={`${items.length} raw items - ${lowItems.length} low stock - ${outOfStockItems.length} out of stock`}
       title="Inventory"
     >
       {apiMessage && <RouteErrorBanner message={apiMessage} />}
       {isLoading && <RouteLoadingBanner />}
 
       <InventoryDashboard
-        filters={{ activeOnly, category, lowOnly, search }}
+        filters={{ activeOnly, category, search, stockStatus }}
         items={filteredItems}
         onActiveOnlyChange={setActiveOnly}
         onCategoryChange={setCategory}
         onDelete={handleDeleteItem}
         onEdit={setEditingItem}
-        onLowOnlyChange={setLowOnly}
         onSearchChange={setSearch}
+        onStockStatusChange={setStockStatus}
         onUpdateQuantity={handleUpdateQuantity}
         onView={setViewingItem}
       />

@@ -3,7 +3,11 @@ import { IngredientInventorySelector } from "./ingredient-inventory-selector";
 import { Button } from "@/components/ui/button";
 import { UnitSelect } from "@/components/ui/unit-select";
 import { emptyIngredient } from "@/lib/constants";
-import { getNumberInputValue, parseNumberInputValue } from "@/utils";
+import {
+  getNumberInputValue,
+  normalizeNumberInputValue,
+  parseNumberInputValue,
+} from "@/utils";
 import type {
   InventoryCategory,
   InventoryItem,
@@ -73,7 +77,9 @@ export function IngredientList({
               onChange={(event) =>
                 updateIngredient(index, {
                   ...ingredient,
-                  amount: parseNumberInputValue(event.target.value),
+                  amount: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
                 })
               }
             />

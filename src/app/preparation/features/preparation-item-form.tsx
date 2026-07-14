@@ -7,7 +7,11 @@ import { Modal } from "@/components/ui/modal";
 import { SelectControl } from "@/components/ui/select-control";
 import { UnitSelect } from "@/components/ui/unit-select";
 import { preparationCategories } from "@/lib/constants";
-import { getNumberInputValue, parseNumberInputValue } from "@/utils";
+import {
+  getNumberInputValue,
+  normalizeNumberInputValue,
+  parseNumberInputValue,
+} from "@/utils";
 import type { InventoryItem } from "@/app/inventory/types/inventory";
 import type {
   PreparationCategory,
@@ -84,7 +88,9 @@ export function PreparationItemForm({
               onChange={(event) =>
                 onChange({
                   ...item,
-                  currentAmount: parseNumberInputValue(event.target.value),
+                  currentAmount: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
                 })
               }
             />
@@ -100,7 +106,9 @@ export function PreparationItemForm({
               onChange={(event) =>
                 onChange({
                   ...item,
-                  minimumAmount: parseNumberInputValue(event.target.value),
+                  minimumAmount: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
                 })
               }
             />

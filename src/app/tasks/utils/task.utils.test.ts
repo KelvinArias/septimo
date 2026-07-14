@@ -104,6 +104,21 @@ describe("getGeneratedLowStockTasks", () => {
       }),
     ]);
   });
+
+  it("generates tasks for out-of-stock preparation items without duplicating existing tasks", () => {
+    const items = [
+      preparationItem({ id: "prep-1", currentAmount: 0, minimumAmount: 250 }),
+      preparationItem({ id: "prep-2", currentAmount: -1, minimumAmount: 250 }),
+    ];
+    const tasks = [task({ linkedPreparationItemId: "prep-1" })];
+
+    expect(getGeneratedLowStockTasks(items, tasks)).toEqual([
+      expect.objectContaining({
+        id: "auto-prep-2",
+        linkedPreparationItemId: "prep-2",
+      }),
+    ]);
+  });
 });
 
 describe("createTaskDraft", () => {

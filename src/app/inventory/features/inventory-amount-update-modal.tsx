@@ -5,9 +5,10 @@ import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import {
   getNumberInputValue,
+  normalizeNumberInputValue,
   parseNumberInputValue,
 } from "@/utils";
-import { isInventoryLowStock } from "@/app/inventory/utils/inventory.utils";
+import { getInventoryStockStatus } from "@/app/inventory/utils/inventory.utils";
 import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 type InventoryAmountUpdateModalProps = {
@@ -23,6 +24,7 @@ export function InventoryAmountUpdateModal({
 }: InventoryAmountUpdateModalProps) {
   const [quantity, setQuantity] = useState(getNumberInputValue(item.currentQuantity));
   const nextItem = { ...item, currentQuantity: parseNumberInputValue(quantity) };
+  const stockStatus = getInventoryStockStatus(nextItem);
 
   return (
     <Modal title="Update Quantity" subtitle={item.name} onClose={onClose}>
@@ -41,12 +43,21 @@ export function InventoryAmountUpdateModal({
             step="0.1"
             type="number"
             value={quantity}
-            onChange={(event) => setQuantity(event.target.value)}
+            onChange={(event) => setQuantity(normalizeNumberInputValue(event.target.value))}
           />
         </Field>
-        {isInventoryLowStock(nextItem) && (
-          <p className="flex items-center gap-2 rounded-md border border-[#f5d190] bg-[#fff8e8] px-3 py-2 text-xs text-[#c45500]">
-            <AlertTriangle size={13} /> Below minimum of {item.minimumQuantity} {item.unit}.
+        {stockStatus !== "available" && (
+          <p
+            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${
+              stockStatus === "out-of-stock"
+                ? "border-[#f1a4a4] bg-[#fff1f1] text-[#b42318]"
+                : "border-[#f5d190] bg-[#fff8e8] text-[#c45500]"
+            }`}
+          >
+            <AlertTriangle size={13} />
+            {stockStatus === "out-of-stock"
+              ? `Out of stock. Minimum is ${item.minimumQuantity} ${item.unit}.`
+              : `Below minimum of ${item.minimumQuantity} ${item.unit}.`}
           </p>
         )}
         <div className="grid gap-2 border-t border-[#e4e0d8] pt-4 sm:grid-cols-2">

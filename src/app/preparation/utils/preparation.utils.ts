@@ -3,16 +3,25 @@ import type {
   PreparationItem,
 } from "@/app/preparation/types/preparation";
 import { emptyIngredient } from "@/lib/constants";
-import { slugify } from "@/utils";
+import { getStockStatus, slugify } from "@/utils";
+import type { StockStatusFilter } from "@/utils";
 
 export type PreparationFilterState = {
   search: string;
   category: "All" | PreparationCategory;
-  lowOnly: boolean;
+  stockStatus: StockStatusFilter;
 };
 
+export function getPreparationStockStatus(item: PreparationItem) {
+  return getStockStatus(item.currentAmount, item.minimumAmount);
+}
+
 export function isLowStock(item: PreparationItem) {
-  return item.currentAmount <= item.minimumAmount;
+  return getPreparationStockStatus(item) === "low-stock";
+}
+
+export function isOutOfStock(item: PreparationItem) {
+  return getPreparationStockStatus(item) === "out-of-stock";
 }
 
 export function searchPreparationItems(items: PreparationItem[], search: string) {
@@ -33,9 +42,10 @@ export function searchPreparationItems(items: PreparationItem[], search: string)
 export function filterPreparationItems(items: PreparationItem[], filters: PreparationFilterState) {
   return searchPreparationItems(items, filters.search).filter((item) => {
     const matchesCategory = filters.category === "All" || item.category === filters.category;
-    const matchesLowStock = !filters.lowOnly || isLowStock(item);
+    const matchesStockStatus =
+      filters.stockStatus === "All" || getPreparationStockStatus(item) === filters.stockStatus;
 
-    return matchesCategory && matchesLowStock;
+    return matchesCategory && matchesStockStatus;
   });
 }
 

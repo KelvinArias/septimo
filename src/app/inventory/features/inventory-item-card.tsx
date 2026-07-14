@@ -4,9 +4,10 @@ import { InventoryAmountEditor } from "./inventory-amount-editor";
 import { InventoryAmountUpdateModal } from "./inventory-amount-update-modal";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { LowStockBadge } from "@/components/ui/status-badge";
+import { StockStatusBadge } from "@/components/ui/status-badge";
 import { classNames } from "@/utils";
-import { isInventoryLowStock } from "@/app/inventory/utils/inventory.utils";
+import type { StockStatus } from "@/utils";
+import { getInventoryStockStatus } from "@/app/inventory/utils/inventory.utils";
 import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 type InventoryItemCardProps = {
@@ -24,7 +25,7 @@ export function InventoryItemCard({
   onUpdateQuantity,
   onView,
 }: InventoryItemCardProps) {
-  const low = isInventoryLowStock(item);
+  const stockStatus = getInventoryStockStatus(item);
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
 
   return (
@@ -33,7 +34,9 @@ export function InventoryItemCard({
         className={classNames(
           "w-full min-w-0 max-w-full rounded-lg border bg-white p-4 text-sm shadow-[0_1px_0_rgba(17,17,17,0.02)] md:p-4 lg:grid lg:rounded-none lg:border-x-0 lg:border-b-0 lg:border-t lg:bg-transparent lg:p-0 lg:py-4 lg:shadow-none",
           "lg:grid-cols-[1.6fr_0.8fr_0.7fr_0.7fr_0.5fr_0.8fr_0.9fr] lg:items-center lg:gap-4",
-          low ? "border-[#f4b000] lg:bg-[#fbf7ef]" : "border-[#e3dfd7]",
+          stockStatus === "out-of-stock" && "border-[#d92d20] lg:bg-[#fff5f5]",
+          stockStatus === "low-stock" && "border-[#f4b000] lg:bg-[#fbf7ef]",
+          stockStatus === "available" && "border-[#e3dfd7]",
           !item.active && "opacity-60",
         )}
       >
@@ -45,7 +48,7 @@ export function InventoryItemCard({
             )}
           </button>
           <div className="shrink-0 lg:hidden">
-            <LowStockBadge low={low} />
+            <StockStatusBadge status={stockStatus} />
           </div>
         </div>
 
@@ -54,7 +57,12 @@ export function InventoryItemCard({
         </span>
 
         <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#eeeae2] pt-4 lg:hidden">
-          <QuantityBlock label="Current" quantity={item.currentQuantity} unit={item.unit} low={low} />
+          <QuantityBlock
+            label="Current"
+            quantity={item.currentQuantity}
+            status={stockStatus}
+            unit={item.unit}
+          />
           <QuantityBlock label="Minimum" quantity={item.minimumQuantity} unit={item.unit} />
         </div>
 
@@ -64,7 +72,7 @@ export function InventoryItemCard({
         <span className="hidden font-mono text-sm lg:block">{item.minimumQuantity}</span>
         <span className="hidden text-[#635d55] lg:block">{item.unit}</span>
         <div className="hidden lg:block">
-          <LowStockBadge low={low} />
+          <StockStatusBadge status={stockStatus} />
         </div>
 
         <div className="mt-4 grid grid-cols-[1fr_1fr_38px_38px] gap-2 border-t border-[#eeeae2] pt-3 lg:mt-0 lg:flex lg:justify-end lg:border-t-0 lg:pt-0">
@@ -110,21 +118,30 @@ export function InventoryItemCard({
 
 function QuantityBlock({
   label,
-  low,
   quantity,
+  status,
   unit,
 }: {
   label: string;
-  low?: boolean;
   quantity: number;
+  status?: StockStatus;
   unit: string;
 }) {
+  const isLowOrOut = status && status !== "available";
+
   return (
     <div>
       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f6960]">
         {label}
       </p>
-      <p className={classNames("mt-1 font-mono text-lg font-semibold", low && "text-[#c45500]")}>
+      <p
+        className={classNames(
+          "mt-1 font-mono text-lg font-semibold",
+          status === "out-of-stock" && "text-[#b42318]",
+          status === "low-stock" && "text-[#c45500]",
+          !isLowOrOut && "text-[#2f2b26]",
+        )}
+      >
         {quantity} <span className="text-xs font-normal text-[#5f5a52]">{unit}</span>
       </p>
     </div>

@@ -1,15 +1,24 @@
 import type { InventoryCategory, InventoryItem } from "@/app/inventory/types/inventory";
-import { slugify } from "@/utils";
+import { getStockStatus, slugify } from "@/utils";
+import type { StockStatusFilter } from "@/utils";
 
 export type InventoryFilterState = {
   search: string;
   category: "All" | InventoryCategory;
-  lowOnly: boolean;
+  stockStatus: StockStatusFilter;
   activeOnly: boolean;
 };
 
+export function getInventoryStockStatus(item: InventoryItem) {
+  return getStockStatus(item.currentQuantity, item.minimumQuantity);
+}
+
 export function isInventoryLowStock(item: InventoryItem) {
-  return item.minimumQuantity > 0 && item.currentQuantity <= item.minimumQuantity;
+  return getInventoryStockStatus(item) === "low-stock";
+}
+
+export function isInventoryOutOfStock(item: InventoryItem) {
+  return getInventoryStockStatus(item) === "out-of-stock";
 }
 
 export function normalizeInventoryName(name: string) {
@@ -56,10 +65,11 @@ export function searchInventoryItems(items: InventoryItem[], search: string) {
 export function filterInventoryItems(items: InventoryItem[], filters: InventoryFilterState) {
   return searchInventoryItems(items, filters.search).filter((item) => {
     const matchesCategory = filters.category === "All" || item.category === filters.category;
-    const matchesLowStock = !filters.lowOnly || isInventoryLowStock(item);
+    const matchesStockStatus =
+      filters.stockStatus === "All" || getInventoryStockStatus(item) === filters.stockStatus;
     const matchesActive = !filters.activeOnly || item.active;
 
-    return matchesCategory && matchesLowStock && matchesActive;
+    return matchesCategory && matchesStockStatus && matchesActive;
   });
 }
 

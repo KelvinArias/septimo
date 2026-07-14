@@ -4,7 +4,9 @@ import {
   createInventoryItemDraft,
   filterInventoryItems,
   findDuplicateInventoryItem,
+  getInventoryStockStatus,
   isInventoryLowStock,
+  isInventoryOutOfStock,
   normalizeInventoryName,
   prepareInventoryItemForSave,
   searchInventoryItems,
@@ -34,6 +36,20 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("getInventoryStockStatus", () => {
+  it("derives available, low-stock, and out-of-stock statuses from quantity", () => {
+    expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 6, minimumQuantity: 5 }))).toBe(
+      "available",
+    );
+    expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 5, minimumQuantity: 5 }))).toBe(
+      "low-stock",
+    );
+    expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 0, minimumQuantity: 5 }))).toBe(
+      "out-of-stock",
+    );
+  });
+});
+
 describe("isInventoryLowStock", () => {
   it("returns true when current quantity is at or below the minimum", () => {
     expect(isInventoryLowStock(inventoryItem({ currentQuantity: 5, minimumQuantity: 5 }))).toBe(
@@ -53,6 +69,23 @@ describe("isInventoryLowStock", () => {
   it("returns false when there is no minimum quantity set", () => {
     expect(isInventoryLowStock(inventoryItem({ currentQuantity: 0, minimumQuantity: 0 }))).toBe(
       false,
+    );
+  });
+
+  it("returns false for out-of-stock items", () => {
+    expect(isInventoryLowStock(inventoryItem({ currentQuantity: 0, minimumQuantity: 5 }))).toBe(
+      false,
+    );
+  });
+});
+
+describe("isInventoryOutOfStock", () => {
+  it("returns true when current quantity is zero or below", () => {
+    expect(isInventoryOutOfStock(inventoryItem({ currentQuantity: 0, minimumQuantity: 5 }))).toBe(
+      true,
+    );
+    expect(isInventoryOutOfStock(inventoryItem({ currentQuantity: -1, minimumQuantity: 5 }))).toBe(
+      true,
     );
   });
 });
@@ -132,10 +165,32 @@ describe("filterInventoryItems", () => {
       filterInventoryItems([matchingItem, inactiveLowStockItem, wrongCategoryItem], {
         search: "lime",
         category: "Fruit",
-        lowOnly: true,
+        stockStatus: "low-stock",
         activeOnly: true,
       }),
     ).toEqual([matchingItem]);
+  });
+
+  it("filters out-of-stock items separately from low-stock items", () => {
+    const outOfStockItem = inventoryItem({
+      id: "inv-1",
+      currentQuantity: 0,
+      minimumQuantity: 5,
+    });
+    const lowStockItem = inventoryItem({
+      id: "inv-2",
+      currentQuantity: 1,
+      minimumQuantity: 5,
+    });
+
+    expect(
+      filterInventoryItems([outOfStockItem, lowStockItem], {
+        search: "",
+        category: "All",
+        stockStatus: "out-of-stock",
+        activeOnly: true,
+      }),
+    ).toEqual([outOfStockItem]);
   });
 });
 

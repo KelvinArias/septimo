@@ -3,7 +3,9 @@ import type { PreparationItem } from "@/app/preparation/types/preparation";
 import {
   createPreparationItemDraft,
   filterPreparationItems,
+  getPreparationStockStatus,
   isLowStock,
+  isOutOfStock,
   preparePreparationItemForSave,
   searchPreparationItems,
 } from "./preparation.utils";
@@ -26,6 +28,20 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("getPreparationStockStatus", () => {
+  it("derives available, low-stock, and out-of-stock statuses from amount", () => {
+    expect(getPreparationStockStatus(preparationItem({ currentAmount: 251, minimumAmount: 250 }))).toBe(
+      "available",
+    );
+    expect(getPreparationStockStatus(preparationItem({ currentAmount: 250, minimumAmount: 250 }))).toBe(
+      "low-stock",
+    );
+    expect(getPreparationStockStatus(preparationItem({ currentAmount: 0, minimumAmount: 250 }))).toBe(
+      "out-of-stock",
+    );
+  });
+});
+
 describe("isLowStock", () => {
   it("returns true when the current amount is at or below the minimum", () => {
     expect(isLowStock(preparationItem({ currentAmount: 250, minimumAmount: 250 }))).toBe(true);
@@ -34,6 +50,17 @@ describe("isLowStock", () => {
 
   it("returns false when the current amount is above the minimum", () => {
     expect(isLowStock(preparationItem({ currentAmount: 251, minimumAmount: 250 }))).toBe(false);
+  });
+
+  it("returns false for out-of-stock items", () => {
+    expect(isLowStock(preparationItem({ currentAmount: 0, minimumAmount: 250 }))).toBe(false);
+  });
+});
+
+describe("isOutOfStock", () => {
+  it("returns true when current amount is zero or below", () => {
+    expect(isOutOfStock(preparationItem({ currentAmount: 0, minimumAmount: 250 }))).toBe(true);
+    expect(isOutOfStock(preparationItem({ currentAmount: -1, minimumAmount: 250 }))).toBe(true);
   });
 });
 
@@ -82,9 +109,30 @@ describe("filterPreparationItems", () => {
       filterPreparationItems([matchingItem, enoughStockItem, wrongCategoryItem], {
         search: "ginger",
         category: "Syrup",
-        lowOnly: true,
+        stockStatus: "low-stock",
       }),
     ).toEqual([matchingItem]);
+  });
+
+  it("filters out-of-stock items separately from low-stock items", () => {
+    const outOfStockItem = preparationItem({
+      id: "prep-1",
+      currentAmount: 0,
+      minimumAmount: 250,
+    });
+    const lowStockItem = preparationItem({
+      id: "prep-2",
+      currentAmount: 1,
+      minimumAmount: 250,
+    });
+
+    expect(
+      filterPreparationItems([outOfStockItem, lowStockItem], {
+        search: "",
+        category: "All",
+        stockStatus: "out-of-stock",
+      }),
+    ).toEqual([outOfStockItem]);
   });
 });
 

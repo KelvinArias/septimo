@@ -4,9 +4,10 @@ import { AmountEditor } from "./amount-editor";
 import { AmountUpdateModal } from "./amount-update-modal";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { LowStockBadge } from "@/components/ui/status-badge";
+import { StockStatusBadge } from "@/components/ui/status-badge";
 import { classNames } from "@/utils";
-import { isLowStock } from "@/app/preparation/utils/preparation.utils";
+import type { StockStatus } from "@/utils";
+import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type PreparationItemCardProps = {
@@ -24,7 +25,7 @@ export function PreparationItemCard({
   onUpdateAmount,
   onView,
 }: PreparationItemCardProps) {
-  const low = isLowStock(item);
+  const stockStatus = getPreparationStockStatus(item);
   const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
 
   return (
@@ -33,7 +34,9 @@ export function PreparationItemCard({
         className={classNames(
           "w-full min-w-0 max-w-full rounded-lg border bg-white p-4 text-sm shadow-[0_1px_0_rgba(17,17,17,0.02)] md:p-4 lg:grid lg:rounded-none lg:border-x-0 lg:border-b-0 lg:border-t lg:bg-transparent lg:p-0 lg:py-4 lg:shadow-none",
           "lg:grid-cols-[2fr_0.8fr_0.7fr_0.7fr_0.45fr_0.8fr_1fr] lg:items-center lg:gap-4",
-          low ? "border-[#f4b000] lg:bg-[#fbf7ef]" : "border-[#e3dfd7]",
+          stockStatus === "out-of-stock" && "border-[#d92d20] lg:bg-[#fff5f5]",
+          stockStatus === "low-stock" && "border-[#f4b000] lg:bg-[#fbf7ef]",
+          stockStatus === "available" && "border-[#e3dfd7]",
         )}
       >
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 lg:block">
@@ -41,7 +44,7 @@ export function PreparationItemCard({
             <p className="font-semibold">{item.name}</p>
           </button>
           <div className="shrink-0 lg:hidden">
-            <LowStockBadge low={low} />
+            <StockStatusBadge status={stockStatus} />
           </div>
         </div>
 
@@ -50,7 +53,12 @@ export function PreparationItemCard({
         </span>
 
         <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#eeeae2] pt-4 lg:hidden">
-          <AmountBlock label="Current" amount={item.currentAmount} unit={item.unit} low={low} />
+          <AmountBlock
+            label="Current"
+            amount={item.currentAmount}
+            status={stockStatus}
+            unit={item.unit}
+          />
           <AmountBlock label="Minimum" amount={item.minimumAmount} unit={item.unit} />
         </div>
 
@@ -60,7 +68,7 @@ export function PreparationItemCard({
         <span className="hidden font-mono text-sm lg:block">{item.minimumAmount}</span>
         <span className="hidden text-[#635d55] lg:block">{item.unit}</span>
         <div className="hidden lg:block">
-          <LowStockBadge low={low} />
+          <StockStatusBadge status={stockStatus} />
         </div>
 
         {item.notes && (
@@ -113,20 +121,29 @@ export function PreparationItemCard({
 function AmountBlock({
   amount,
   label,
-  low,
+  status,
   unit,
 }: {
   amount: number;
   label: string;
-  low?: boolean;
+  status?: StockStatus;
   unit: string;
 }) {
+  const isLowOrOut = status && status !== "available";
+
   return (
     <div>
       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f6960]">
         {label}
       </p>
-      <p className={classNames("mt-1 font-mono text-lg font-semibold", low && "text-[#c45500]")}>
+      <p
+        className={classNames(
+          "mt-1 font-mono text-lg font-semibold",
+          status === "out-of-stock" && "text-[#b42318]",
+          status === "low-stock" && "text-[#c45500]",
+          !isLowOrOut && "text-[#2f2b26]",
+        )}
+      >
         {amount} <span className="text-xs font-normal text-[#5f5a52]">{unit}</span>
       </p>
     </div>

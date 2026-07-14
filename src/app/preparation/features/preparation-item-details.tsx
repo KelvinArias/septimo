@@ -2,9 +2,9 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Metric } from "@/components/ui/metric";
 import { Modal } from "@/components/ui/modal";
-import { LowStockBadge } from "@/components/ui/status-badge";
+import { StockStatusBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/utils";
-import { isLowStock } from "@/app/preparation/utils/preparation.utils";
+import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type PreparationItemDetailsProps = {
@@ -29,7 +29,7 @@ export function PreparationItemDetails({ item, onClose, onEdit }: PreparationIte
               Status
             </p>
             <div className="mt-1">
-              <LowStockBadge low={isLowStock(item)} />
+              <StockStatusBadge status={getPreparationStockStatus(item)} />
             </div>
           </div>
         </div>

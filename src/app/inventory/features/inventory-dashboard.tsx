@@ -2,6 +2,7 @@ import { InventoryFilters } from "./inventory-filters";
 import { InventoryTable } from "./inventory-table";
 import type { InventoryFilterState } from "@/app/inventory/utils/inventory.utils";
 import type { InventoryCategory, InventoryItem } from "@/app/inventory/types/inventory";
+import type { StockStatusFilter } from "@/utils";
 
 type InventoryDashboardProps = {
   filters: InventoryFilterState;
@@ -10,7 +11,7 @@ type InventoryDashboardProps = {
   onCategoryChange: (category: "All" | InventoryCategory) => void;
   onDelete: (id: string) => void;
   onEdit: (item: InventoryItem) => void;
-  onLowOnlyChange: (value: boolean) => void;
+  onStockStatusChange: (status: StockStatusFilter) => void;
   onSearchChange: (value: string) => void;
   onUpdateQuantity: (id: string, quantity: number) => void;
   onView: (item: InventoryItem) => void;
@@ -23,7 +24,7 @@ export function InventoryDashboard({
   onCategoryChange,
   onDelete,
   onEdit,
-  onLowOnlyChange,
+  onStockStatusChange,
   onSearchChange,
   onUpdateQuantity,
   onView,
@@ -33,12 +34,12 @@ export function InventoryDashboard({
       <InventoryFilters
         activeOnly={filters.activeOnly}
         category={filters.category}
-        lowOnly={filters.lowOnly}
         search={filters.search}
+        stockStatus={filters.stockStatus}
         onActiveOnlyChange={onActiveOnlyChange}
         onCategoryChange={onCategoryChange}
-        onLowOnlyChange={onLowOnlyChange}
         onSearchChange={onSearchChange}
+        onStockStatusChange={onStockStatusChange}
       />
       <InventoryTable
         items={items}

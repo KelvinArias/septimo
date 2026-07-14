@@ -4,9 +4,10 @@ import { useState } from "react";
 import {
   classNames,
   getNumberInputValue,
+  normalizeNumberInputValue,
   parseNumberInputValue,
 } from "@/utils";
-import { isLowStock } from "@/app/preparation/utils/preparation.utils";
+import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type AmountEditorProps = {
@@ -16,6 +17,7 @@ type AmountEditorProps = {
 
 export function AmountEditor({ item, onUpdateAmount }: AmountEditorProps) {
   const [value, setValue] = useState(getNumberInputValue(item.currentAmount));
+  const stockStatus = getPreparationStockStatus(item);
 
   return (
     <form
@@ -28,12 +30,14 @@ export function AmountEditor({ item, onUpdateAmount }: AmountEditorProps) {
       <input
         className={classNames(
           "h-8 w-20 rounded-md border bg-white px-2 font-mono text-sm outline-none focus:border-[#aaa398]",
-          isLowStock(item) ? "border-[#f1b56a] text-[#c45500]" : "border-[#d8d4cc]",
+          stockStatus === "out-of-stock" && "border-[#d92d20] text-[#b42318]",
+          stockStatus === "low-stock" && "border-[#f1b56a] text-[#c45500]",
+          stockStatus === "available" && "border-[#d8d4cc]",
         )}
         step="0.1"
         type="number"
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => setValue(normalizeNumberInputValue(event.target.value))}
       />
       <button
         className="inline-flex h-8 items-center justify-center rounded-md border border-[#d8d4cc] bg-white px-3 text-xs font-semibold text-[#58534c] transition hover:border-[#aaa398] hover:bg-[#f7f6f3]"

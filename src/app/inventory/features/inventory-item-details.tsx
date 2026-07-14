@@ -2,9 +2,9 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Metric } from "@/components/ui/metric";
 import { Modal } from "@/components/ui/modal";
-import { LowStockBadge } from "@/components/ui/status-badge";
+import { StockStatusBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/utils";
-import { isInventoryLowStock } from "@/app/inventory/utils/inventory.utils";
+import { getInventoryStockStatus } from "@/app/inventory/utils/inventory.utils";
 import type { InventoryItem } from "@/app/inventory/types/inventory";
 
 type InventoryItemDetailsProps = {
@@ -29,7 +29,7 @@ export function InventoryItemDetails({ item, onClose, onEdit }: InventoryItemDet
               Status
             </p>
             <div className="mt-1">
-              <LowStockBadge low={isInventoryLowStock(item)} />
+              <StockStatusBadge status={getInventoryStockStatus(item)} />
             </div>
           </div>
         </div>

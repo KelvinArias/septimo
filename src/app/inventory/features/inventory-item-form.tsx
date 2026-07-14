@@ -6,7 +6,11 @@ import { Modal } from "@/components/ui/modal";
 import { SelectControl } from "@/components/ui/select-control";
 import { UnitSelect } from "@/components/ui/unit-select";
 import { inventoryCategories } from "@/lib/constants";
-import { getNumberInputValue, parseNumberInputValue } from "@/utils";
+import {
+  getNumberInputValue,
+  normalizeNumberInputValue,
+  parseNumberInputValue,
+} from "@/utils";
 import type { InventoryCategory, InventoryItem } from "@/app/inventory/types/inventory";
 
 type InventoryItemFormProps = {
@@ -72,7 +76,9 @@ export function InventoryItemForm({
               onChange={(event) =>
                 onChange({
                   ...item,
-                  currentQuantity: parseNumberInputValue(event.target.value),
+                  currentQuantity: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
                 })
               }
             />
@@ -87,7 +93,9 @@ export function InventoryItemForm({
               onChange={(event) =>
                 onChange({
                   ...item,
-                  minimumQuantity: parseNumberInputValue(event.target.value),
+                  minimumQuantity: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
                 })
               }
             />
@@ -100,7 +108,12 @@ export function InventoryItemForm({
               type="number"
               value={getNumberInputValue(item.parLevel ?? 0)}
               onChange={(event) =>
-                onChange({ ...item, parLevel: parseNumberInputValue(event.target.value) })
+                onChange({
+                  ...item,
+                  parLevel: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
+                })
               }
             />
           </Field>
@@ -140,7 +153,12 @@ export function InventoryItemForm({
               type="number"
               value={getNumberInputValue(item.costPerUnit ?? 0)}
               onChange={(event) =>
-                onChange({ ...item, costPerUnit: parseNumberInputValue(event.target.value) })
+                onChange({
+                  ...item,
+                  costPerUnit: parseNumberInputValue(
+                    normalizeNumberInputValue(event.target.value),
+                  ),
+                })
               }
             />
           </Field>

@@ -13,7 +13,11 @@ export function formatDate(value?: string) {
 }
 
 export function getNumberInputValue(value: number) {
-  return value === 0 ? "" : String(value);
+  return String(value);
+}
+
+export function normalizeNumberInputValue(value: string) {
+  return value.replace(/^0+(?=\d)/, "");
 }
 
 export function parseNumberInputValue(value: string) {
@@ -27,3 +31,10 @@ export function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+export type { StockStatus, StockStatusFilter } from "./stock-status";
+export {
+  getStockStatus,
+  isLowStockStatus,
+  isOutOfStockStatus,
+} from "./stock-status";

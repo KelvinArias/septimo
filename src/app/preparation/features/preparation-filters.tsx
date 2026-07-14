@@ -1,25 +1,24 @@
-import { Filter } from "lucide-react";
 import { PreparationSearch } from "./preparation-search";
 import { SelectControl } from "@/components/ui/select-control";
 import { preparationCategories } from "@/lib/constants";
-import { classNames } from "@/utils";
 import type { PreparationCategory } from "@/app/preparation/types/preparation";
+import type { StockStatusFilter } from "@/utils";
 
 type PreparationFiltersProps = {
   category: "All" | PreparationCategory;
-  lowOnly: boolean;
+  stockStatus: StockStatusFilter;
   search: string;
   onCategoryChange: (category: "All" | PreparationCategory) => void;
-  onLowOnlyChange: (value: boolean) => void;
+  onStockStatusChange: (status: StockStatusFilter) => void;
   onSearchChange: (value: string) => void;
 };
 
 export function PreparationFilters({
   category,
-  lowOnly,
+  stockStatus,
   search,
   onCategoryChange,
-  onLowOnlyChange,
+  onStockStatusChange,
   onSearchChange,
 }: PreparationFiltersProps) {
   return (
@@ -44,17 +43,17 @@ export function PreparationFilters({
           </option>
         ))}
       </SelectControl>
-      <button
-        className={classNames(
-          "inline-flex min-h-11 max-w-37 flex-[1_1_140px] items-center justify-center gap-2 rounded-md border px-3 text-sm transition lg:min-h-9",
-          lowOnly
-            ? "border-[#f1b56a] bg-[#fff5e8] text-[#b65700]"
-            : "border-[#d8d4cc] bg-white text-[#635d55] hover:border-[#bbb4aa]",
-        )}
-        onClick={() => onLowOnlyChange(!lowOnly)}
+      <SelectControl
+        className="h-9"
+        containerClassName="max-w-[175px] flex-[1_1_170px]"
+        value={stockStatus}
+        onChange={(event) => onStockStatusChange(event.target.value as StockStatusFilter)}
       >
-        <Filter size={15} /> Low Stock
-      </button>
+        <option value="All">All Statuses</option>
+        <option value="available">Available</option>
+        <option value="low-stock">Low Stock</option>
+        <option value="out-of-stock">Out of Stock</option>
+      </SelectControl>
     </div>
   );
 }

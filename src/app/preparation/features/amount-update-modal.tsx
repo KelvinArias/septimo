@@ -3,8 +3,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { getNumberInputValue, parseNumberInputValue } from "@/utils";
-import { isLowStock } from "@/app/preparation/utils/preparation.utils";
+import {
+  getNumberInputValue,
+  normalizeNumberInputValue,
+  parseNumberInputValue,
+} from "@/utils";
+import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type AmountUpdateModalProps = {
@@ -20,6 +24,7 @@ export function AmountUpdateModal({
 }: AmountUpdateModalProps) {
   const [amount, setAmount] = useState(getNumberInputValue(item.currentAmount));
   const nextItem = { ...item, currentAmount: parseNumberInputValue(amount) };
+  const stockStatus = getPreparationStockStatus(nextItem);
 
   return (
     <Modal title="Update Amount" subtitle={item.name} onClose={onClose}>
@@ -38,13 +43,21 @@ export function AmountUpdateModal({
             step="0.1"
             type="number"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => setAmount(normalizeNumberInputValue(event.target.value))}
           />
         </Field>
-        {isLowStock(nextItem) && (
-          <p className="flex items-center gap-2 rounded-md border border-[#f5d190] bg-[#fff8e8] px-3 py-2 text-xs text-[#c45500]">
-            <AlertTriangle size={13} /> Below minimum of {item.minimumAmount} {item.unit} - a
-            preparation task will be created automatically.
+        {stockStatus !== "available" && (
+          <p
+            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${
+              stockStatus === "out-of-stock"
+                ? "border-[#f1a4a4] bg-[#fff1f1] text-[#b42318]"
+                : "border-[#f5d190] bg-[#fff8e8] text-[#c45500]"
+            }`}
+          >
+            <AlertTriangle size={13} />
+            {stockStatus === "out-of-stock"
+              ? `Out of stock. Minimum is ${item.minimumAmount} ${item.unit}; a preparation task will be created automatically.`
+              : `Below minimum of ${item.minimumAmount} ${item.unit}; a preparation task will be created automatically.`}
           </p>
         )}
         <div className="grid gap-2 border-t border-[#e4e0d8] pt-4 sm:grid-cols-2">

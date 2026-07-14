@@ -26,6 +26,7 @@ import {
   createPreparationItemDraft,
   filterPreparationItems,
   isLowStock,
+  isOutOfStock,
   preparePreparationItemForSave,
 } from "@/app/preparation/utils/preparation.utils";
 import { getGeneratedLowStockTasks } from "@/app/tasks/utils/task.utils";
@@ -42,6 +43,7 @@ import {
 } from "@/services/preparation-client.service";
 import { fetchTasks } from "@/services/task-client.service";
 import type { Unit } from "@/types";
+import type { StockStatusFilter } from "@/utils";
 
 export function PreparationPageContent() {
   const [items, setItems] = useState<PreparationItem[]>([]);
@@ -52,7 +54,7 @@ export function PreparationPageContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"All" | PreparationCategory>("All");
-  const [lowOnly, setLowOnly] = useState(false);
+  const [stockStatus, setStockStatus] = useState<StockStatusFilter>("All");
   const [editingItem, setEditingItem] = useState<PreparationItem | null>(null);
   const [viewingItem, setViewingItem] = useState<PreparationItem | null>(null);
 
@@ -93,7 +95,8 @@ export function PreparationPageContent() {
   }, [successMessage]);
 
   const lowItems = useMemo(() => items.filter(isLowStock), [items]);
-  const filteredItems = filterPreparationItems(items, { category, lowOnly, search });
+  const outOfStockItems = useMemo(() => items.filter(isOutOfStock), [items]);
+  const filteredItems = filterPreparationItems(items, { category, search, stockStatus });
 
   async function handleQuickCreateInventoryItem(
     name: string,
@@ -188,20 +191,20 @@ export function PreparationPageContent() {
         </Button>
       }
       pendingTaskCount={pendingTaskCount}
-      subtitle={`${items.length} preparations - ${lowItems.length} low stock`}
+      subtitle={`${items.length} preparations - ${lowItems.length} low stock - ${outOfStockItems.length} out of stock`}
       title="Preparation"
     >
       {apiMessage && <RouteErrorBanner message={apiMessage} />}
       {isLoading && <RouteLoadingBanner />}
 
       <PreparationDashboard
-        filters={{ category, lowOnly, search }}
+        filters={{ category, search, stockStatus }}
         items={filteredItems}
         onCategoryChange={setCategory}
         onDelete={handleDeleteItem}
         onEdit={setEditingItem}
-        onLowOnlyChange={setLowOnly}
         onSearchChange={setSearch}
+        onStockStatusChange={setStockStatus}
         onUpdateAmount={handleUpdateAmount}
         onView={setViewingItem}
       />

@@ -3,6 +3,7 @@ import {
   classNames,
   formatDate,
   getNumberInputValue,
+  normalizeNumberInputValue,
   parseNumberInputValue,
   slugify,
 } from "./index";
@@ -29,8 +30,8 @@ describe("formatDate", () => {
 });
 
 describe("getNumberInputValue", () => {
-  it("returns an empty string for zero", () => {
-    expect(getNumberInputValue(0)).toBe("");
+  it("returns 0 as a visible value for out-of-stock number inputs", () => {
+    expect(getNumberInputValue(0)).toBe("0");
   });
 
   it("returns the string representation for non-zero values", () => {
@@ -45,6 +46,19 @@ describe("parseNumberInputValue", () => {
 
   it("returns zero for an empty input", () => {
     expect(parseNumberInputValue("")).toBe(0);
+  });
+});
+
+describe("normalizeNumberInputValue", () => {
+  it("replaces a visible zero when the user types a whole number", () => {
+    expect(normalizeNumberInputValue("01")).toBe("1");
+    expect(normalizeNumberInputValue("003")).toBe("3");
+  });
+
+  it("preserves a single zero and decimal values", () => {
+    expect(normalizeNumberInputValue("0")).toBe("0");
+    expect(normalizeNumberInputValue("0.5")).toBe("0.5");
+    expect(normalizeNumberInputValue("")).toBe("");
   });
 });
 

@@ -1,7 +1,7 @@
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 import type { Task } from "@/app/tasks/types/task";
 import { slugify } from "@/utils";
-import { isLowStock } from "@/app/preparation/utils/preparation.utils";
+import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
 
 export function sortTasks(tasks: Task[]) {
   return [...tasks].sort(
@@ -30,7 +30,7 @@ export function getTaskPreparationItemId(task: Task) {
 
 export function getGeneratedLowStockTasks(items: PreparationItem[], tasks: Task[]) {
   return items
-    .filter(isLowStock)
+    .filter((item) => getPreparationStockStatus(item) !== "available")
     .filter((item) => !tasks.some((task) => getTaskPreparationItemId(task) === item.id))
     .map(createLowStockTask);
 }
