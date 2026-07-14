@@ -1,7 +1,7 @@
 import { seedItem } from "./seed-item.ts";
 
 const liqueurs = [
-  ["st-germain", "St-Germain", 3000, 750, 4500, 0.048],
+  ["st-germain", "St-Germain", 2, 1, 3, 0],
 ] as const;
 
 export const liqueurSeeds = liqueurs.map(([seedId, name, currentQuantity, minimumQuantity, parLevel, costPerUnit]) =>
@@ -12,7 +12,7 @@ export const liqueurSeeds = liqueurs.map(([seedId, name, currentQuantity, minimu
     currentQuantity,
     minimumQuantity,
     parLevel,
-    unit: "ml",
+    unit: "bottles",
     expirationDate: "2030-12-31",
     supplier: "Southern Glazer's",
     storageLocation: "Back Bar - Liqueurs and Aperitifs",
