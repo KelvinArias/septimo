@@ -1,9 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 import {
   createPreparationItemDraft,
+  canProduce,
+  cannotProduce,
   filterPreparationItems,
+  getMissingIngredientNames,
+  getMissingIngredientDetails,
   getPreparationStockStatus,
+  getProductionStatus,
+  isCannotProduce,
   isLowStock,
   isOutOfStock,
   preparePreparationItemForSave,
@@ -24,14 +31,30 @@ const preparationItem = (overrides: Partial<PreparationItem> = {}): PreparationI
   ...overrides,
 });
 
+const inventoryItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
+  id: "inv-1",
+  name: "Ginger",
+  category: "Herb",
+  currentQuantity: 10,
+  minimumQuantity: 5,
+  unit: "g",
+  dateAdded: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  active: true,
+  ...overrides,
+});
+
 afterEach(() => {
   vi.useRealTimers();
 });
 
 describe("getPreparationStockStatus", () => {
   it("derives available, low-stock, and out-of-stock statuses from amount", () => {
-    expect(getPreparationStockStatus(preparationItem({ currentAmount: 251, minimumAmount: 250 }))).toBe(
+    expect(getPreparationStockStatus(preparationItem({ currentAmount: 300, minimumAmount: 250 }))).toBe(
       "available",
+    );
+    expect(getPreparationStockStatus(preparationItem({ currentAmount: 299, minimumAmount: 250 }))).toBe(
+      "low-stock",
     );
     expect(getPreparationStockStatus(preparationItem({ currentAmount: 250, minimumAmount: 250 }))).toBe(
       "low-stock",
@@ -49,7 +72,7 @@ describe("isLowStock", () => {
   });
 
   it("returns false when the current amount is above the minimum", () => {
-    expect(isLowStock(preparationItem({ currentAmount: 251, minimumAmount: 250 }))).toBe(false);
+    expect(isLowStock(preparationItem({ currentAmount: 300, minimumAmount: 250 }))).toBe(false);
   });
 
   it("returns false for out-of-stock items", () => {
@@ -61,6 +84,93 @@ describe("isOutOfStock", () => {
   it("returns true when current amount is zero or below", () => {
     expect(isOutOfStock(preparationItem({ currentAmount: 0, minimumAmount: 250 }))).toBe(true);
     expect(isOutOfStock(preparationItem({ currentAmount: -1, minimumAmount: 250 }))).toBe(true);
+  });
+});
+
+describe("getProductionStatus", () => {
+  it("returns can-produce when every linked inventory item is available", () => {
+    const item = preparationItem({ category: "Pre-Batch" });
+    const inventory = [inventoryItem({ id: "inv-1", currentQuantity: 1 })];
+
+    expect(getProductionStatus(item, inventory)).toBe("can-produce");
+    expect(canProduce(item, inventory)).toBe(true);
+  });
+
+  it("returns cannot-produce and names one out-of-stock ingredient", () => {
+    const item = preparationItem({ category: "Pre-Batch" });
+    const inventory = [inventoryItem({ id: "inv-1", name: "Lime Juice", currentQuantity: 0 })];
+
+    expect(getProductionStatus(item, inventory)).toBe("cannot-produce");
+    expect(cannotProduce(item, inventory)).toBe(true);
+    expect(getMissingIngredientNames(item, inventory)).toEqual(["Lime Juice"]);
+    expect(getMissingIngredientDetails(item, inventory)).toEqual([
+      { amount: 100, name: "Lime Juice", unit: "g" },
+    ]);
+  });
+
+  it("returns every missing ingredient name for multiple shortages", () => {
+    const item = preparationItem({
+      category: "Pre-Batch",
+      ingredients: [
+        { name: "Lime", amount: 100, unit: "ml", inventoryItemId: "inv-1" },
+        { name: "Mint", amount: 10, unit: "g", inventoryItemId: "inv-2" },
+      ],
+    });
+    const inventory = [
+      inventoryItem({ id: "inv-1", name: "Lime Juice", currentQuantity: 0 }),
+      inventoryItem({ id: "inv-2", name: "Mint", currentQuantity: -1 }),
+    ];
+
+    expect(getMissingIngredientNames(item, inventory)).toEqual(["Lime Juice", "Mint"]);
+    expect(getMissingIngredientDetails(item, inventory)).toEqual([
+      { amount: 100, name: "Lime Juice", unit: "ml" },
+      { amount: 10, name: "Mint", unit: "g" },
+    ]);
+  });
+
+  it("treats unresolved inventory references as unavailable without crashing", () => {
+    const item = preparationItem({
+      category: "Pre-Batch",
+      ingredients: [
+        { name: "Deleted Lime", amount: 100, unit: "ml", inventoryItemId: "missing" },
+      ],
+    });
+
+    expect(getProductionStatus(item, [])).toBe("cannot-produce");
+    expect(getMissingIngredientNames(item, [])).toEqual(["Deleted Lime"]);
+  });
+
+  it("returns to can-produce when the last missing ingredient is restocked", () => {
+    const item = preparationItem({ category: "Pre-Batch" });
+
+    expect(getProductionStatus(item, [inventoryItem({ currentQuantity: 0 })])).toBe(
+      "cannot-produce",
+    );
+    expect(getProductionStatus(item, [inventoryItem({ currentQuantity: 2 })])).toBe(
+      "can-produce",
+    );
+  });
+
+  it("keeps quantity status independent from production status", () => {
+    const lowButUnproducible = preparationItem({
+      category: "Pre-Batch",
+      currentAmount: 2,
+      minimumAmount: 5,
+    });
+    const emptyButProducible = preparationItem({
+      category: "Pre-Batch",
+      currentAmount: 0,
+      minimumAmount: 5,
+    });
+
+    expect(getPreparationStockStatus(lowButUnproducible)).toBe("low-stock");
+    expect(getProductionStatus(lowButUnproducible, [inventoryItem({ currentQuantity: 0 })])).toBe(
+      "cannot-produce",
+    );
+    expect(getPreparationStockStatus(emptyButProducible)).toBe("out-of-stock");
+    expect(getProductionStatus(emptyButProducible, [inventoryItem({ currentQuantity: 5 })])).toBe(
+      "can-produce",
+    );
   });
 });
 
@@ -110,6 +220,7 @@ describe("filterPreparationItems", () => {
         search: "ginger",
         category: "Syrup",
         stockStatus: "low-stock",
+        productionStatus: "All",
       }),
     ).toEqual([matchingItem]);
   });
@@ -131,8 +242,65 @@ describe("filterPreparationItems", () => {
         search: "",
         category: "All",
         stockStatus: "out-of-stock",
+        productionStatus: "All",
       }),
     ).toEqual([outOfStockItem]);
+  });
+
+  it("filters production availability independently from quantity status", () => {
+    const cannotProduceLowStock = preparationItem({
+      id: "prep-1",
+      category: "Pre-Batch",
+      currentAmount: 2,
+      minimumAmount: 5,
+      ingredients: [{ name: "Lime", amount: 100, unit: "ml", inventoryItemId: "inv-1" }],
+    });
+    const canProduceLowStock = preparationItem({
+      id: "prep-2",
+      category: "Pre-Batch",
+      currentAmount: 2,
+      minimumAmount: 5,
+      ingredients: [{ name: "Mint", amount: 10, unit: "g", inventoryItemId: "inv-2" }],
+    });
+
+    expect(
+      filterPreparationItems(
+        [cannotProduceLowStock, canProduceLowStock],
+        {
+          search: "",
+          category: "All",
+          stockStatus: "low-stock",
+          productionStatus: "cannot-produce",
+        },
+        [
+          inventoryItem({ id: "inv-1", currentQuantity: 0 }),
+          inventoryItem({ id: "inv-2", currentQuantity: 10 }),
+        ],
+      ),
+    ).toEqual([cannotProduceLowStock]);
+  });
+
+  it("does not treat non-pre-batch preparations as production-filter matches", () => {
+    const syrup = preparationItem({
+      category: "Syrup",
+      ingredients: [{ name: "Lime", amount: 100, unit: "ml", inventoryItemId: "inv-1" }],
+    });
+
+    expect(isCannotProduce(syrup, [inventoryItem({ id: "inv-1", currentQuantity: 0 })])).toBe(
+      false,
+    );
+    expect(
+      filterPreparationItems(
+        [syrup],
+        {
+          search: "",
+          category: "All",
+          stockStatus: "All",
+          productionStatus: "cannot-produce",
+        },
+        [inventoryItem({ id: "inv-1", currentQuantity: 0 })],
+      ),
+    ).toEqual([]);
   });
 });
 

@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import { getStockStatus } from "./stock-status";
 
 describe("getStockStatus", () => {
-  it("returns available when quantity is above the minimum", () => {
+  it("returns available when quantity is at least 20% above the minimum", () => {
     expect(getStockStatus(6, 5)).toBe("available");
+  });
+
+  it("returns low-stock when quantity is above the minimum but below the 20% buffer", () => {
+    expect(getStockStatus(5.9, 5)).toBe("low-stock");
   });
 
   it("returns low-stock when quantity equals the minimum", () => {

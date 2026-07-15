@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 import type { Task } from "@/app/tasks/types/task";
 import {
+  createInventoryRestockTask,
   createLowStockTask,
   createTaskDraft,
+  getGeneratedInventoryRestockTasks,
   getGeneratedLowStockTasks,
   getTaskPreparationItemId,
   markTaskCompleted,
@@ -21,6 +24,19 @@ const preparationItem = (overrides: Partial<PreparationItem> = {}): PreparationI
   ingredients: [],
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  ...overrides,
+});
+
+const inventoryItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
+  id: "inv-1",
+  name: "Lime Juice",
+  category: "Juice",
+  currentQuantity: 0,
+  minimumQuantity: 5,
+  unit: "ml",
+  dateAdded: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  active: true,
   ...overrides,
 });
 
@@ -82,8 +98,102 @@ describe("getTaskPreparationItemId", () => {
   });
 
   it("falls back to the legacy inventory item id", () => {
-    expect(getTaskPreparationItemId(task({ linkedInventoryItemId: "legacy-1" }))).toBe(
-      "legacy-1",
+    expect(
+      getTaskPreparationItemId(task({ linkedInventoryItemId: "legacy-1" }), [
+        preparationItem({ id: "legacy-1" }),
+      ]),
+    ).toBe("legacy-1");
+  });
+
+  it("does not treat current inventory restock links as preparation links", () => {
+    expect(
+      getTaskPreparationItemId(task({ linkedInventoryItemId: "inv-1" }), [
+        preparationItem({ id: "prep-1" }),
+      ]),
+    ).toBeUndefined();
+  });
+});
+
+describe("createInventoryRestockTask", () => {
+  it("creates one restock task with affected pre-batches in the description", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-04T05:06:07.000Z"));
+
+    expect(
+      createInventoryRestockTask(inventoryItem(), [
+        preparationItem({ id: "prep-1", name: "House Margarita" }),
+        preparationItem({ id: "prep-2", name: "Mojito Batch" }),
+      ]),
+    ).toEqual({
+      id: "auto-restock-inv-1",
+      title: "Restock Lime Juice",
+      description:
+        "Status: Out of Stock.\n\nAffected pre-batches:\n- House Margarita\n- Mojito Batch",
+      status: "pending",
+      createdAt: "2026-03-04T05:06:07.000Z",
+      linkedInventoryItemId: "inv-1",
+      affectedPreparationItemIds: ["prep-1", "prep-2"],
+    });
+  });
+});
+
+describe("getGeneratedInventoryRestockTasks", () => {
+  it("creates one task per out-of-stock inventory item and lists affected pre-batches", () => {
+    const preparations = [
+      preparationItem({
+        id: "prep-1",
+        name: "House Margarita",
+        category: "Pre-Batch",
+        ingredients: [{ name: "Lime", amount: 100, unit: "ml", inventoryItemId: "inv-1" }],
+      }),
+      preparationItem({
+        id: "prep-2",
+        name: "Mojito Batch",
+        category: "Pre-Batch",
+        ingredients: [{ name: "Lime", amount: 50, unit: "ml", inventoryItemId: "inv-1" }],
+      }),
+    ];
+
+    expect(getGeneratedInventoryRestockTasks([inventoryItem()], preparations, [])).toEqual([
+      expect.objectContaining({
+        id: "auto-restock-inv-1",
+        linkedInventoryItemId: "inv-1",
+        affectedPreparationItemIds: ["prep-1", "prep-2"],
+      }),
+    ]);
+  });
+
+  it("does not duplicate an existing inventory restock task", () => {
+    expect(
+      getGeneratedInventoryRestockTasks(
+        [inventoryItem()],
+        [],
+        [task({ linkedInventoryItemId: "inv-1" })],
+      ),
+    ).toEqual([]);
+  });
+
+  it("stops generating the task after inventory is restocked", () => {
+    expect(
+      getGeneratedInventoryRestockTasks(
+        [inventoryItem({ currentQuantity: 1 })],
+        [],
+        [],
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("getGeneratedLowStockTasks", () => {
+  it("does not create a prep task when the pre-batch cannot be produced", () => {
+    const item = preparationItem({
+      category: "Pre-Batch",
+      currentAmount: 0,
+      ingredients: [{ name: "Lime", amount: 100, unit: "ml", inventoryItemId: "inv-1" }],
+    });
+
+    expect(getGeneratedLowStockTasks([item], [], [inventoryItem({ currentQuantity: 0 })])).toEqual(
+      [],
     );
   });
 });

@@ -1,11 +1,16 @@
 import { AlertTriangle, Check, Pencil, Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { classNames, formatDate } from "@/utils";
-import { getTaskPreparationItemId } from "@/app/tasks/utils/task.utils";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
+import {
+  getTaskInventoryItemId,
+  getTaskPreparationItemId,
+} from "@/app/tasks/utils/task.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 import type { Task } from "@/app/tasks/types/task";
 
 type TaskCardProps = {
+  inventoryItems: InventoryItem[];
   preparations: PreparationItem[];
   task: Task;
   onComplete: (task: Task) => void;
@@ -13,14 +18,30 @@ type TaskCardProps = {
   onEdit: (task: Task) => void;
 };
 
-export function TaskCard({ preparations, task, onComplete, onDelete, onEdit }: TaskCardProps) {
-  const linkedPreparationId = getTaskPreparationItemId(task);
+export function TaskCard({
+  inventoryItems,
+  preparations,
+  task,
+  onComplete,
+  onDelete,
+  onEdit,
+}: TaskCardProps) {
+  const linkedPreparationId = getTaskPreparationItemId(task, preparations);
+  const linkedInventoryItemId = getTaskInventoryItemId(task, inventoryItems);
   const item = preparations.find((preparation) => preparation.id === linkedPreparationId);
+  const inventoryItem = inventoryItems.find(
+    (currentItem) => currentItem.id === linkedInventoryItemId,
+  );
+  const affectedPreparations = preparations.filter((preparation) =>
+    task.affectedPreparationItemIds?.includes(preparation.id),
+  );
+
   return (
     <div
       className={classNames(
         "w-full min-w-0 max-w-full rounded-lg border border-[#e3dfd7] bg-white px-4 py-4 text-sm shadow-[0_1px_0_rgba(17,17,17,0.02)]",
         item && "border-t-4 border-t-[#f4a000]",
+        inventoryItem && "border-t-4 border-t-[#d92d20]",
       )}
     >
       <div className="min-w-0 flex-1">
@@ -52,7 +73,22 @@ export function TaskCard({ preparations, task, onComplete, onDelete, onEdit }: T
               <AlertTriangle size={12} /> {item.name}
             </span>
           )}
+          {inventoryItem && (
+            <span className="inline-flex items-center gap-1 rounded bg-[#fff1f1] px-2 py-1 text-[#b42318]">
+              <AlertTriangle size={12} /> {inventoryItem.name}
+            </span>
+          )}
         </div>
+        {affectedPreparations.length > 0 && (
+          <div className="mt-3 rounded border border-[#f1d0d0] bg-[#fff8f8] px-3 py-2 text-xs text-[#7a1f1f]">
+            <p className="font-semibold">Affected pre-batches</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              {affectedPreparations.map((preparation) => (
+                <li key={preparation.id}>{preparation.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

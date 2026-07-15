@@ -7,6 +7,7 @@ export type Task = {
   status: TaskStatus;
   createdAt: string;
   completedAt?: string;
+  affectedPreparationItemIds?: string[];
   linkedPreparationItemId?: string;
   /** Legacy Phase 1 compatibility for tasks created before Inventory became Preparation. */
   linkedInventoryItemId?: string;

@@ -41,6 +41,9 @@ describe("getInventoryStockStatus", () => {
     expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 6, minimumQuantity: 5 }))).toBe(
       "available",
     );
+    expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 5.9, minimumQuantity: 5 }))).toBe(
+      "low-stock",
+    );
     expect(getInventoryStockStatus(inventoryItem({ currentQuantity: 5, minimumQuantity: 5 }))).toBe(
       "low-stock",
     );
@@ -61,6 +64,9 @@ describe("isInventoryLowStock", () => {
   });
 
   it("returns false when current quantity is above the minimum", () => {
+    expect(isInventoryLowStock(inventoryItem({ currentQuantity: 5.9, minimumQuantity: 5 }))).toBe(
+      true,
+    );
     expect(isInventoryLowStock(inventoryItem({ currentQuantity: 6, minimumQuantity: 5 }))).toBe(
       false,
     );

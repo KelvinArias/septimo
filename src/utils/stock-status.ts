@@ -6,7 +6,7 @@ export function getStockStatus(quantity: number, minimumAmount: number): StockSt
     return "out-of-stock";
   }
 
-  if (quantity <= minimumAmount) {
+  if (quantity < minimumAmount * 1.2) {
     return "low-stock";
   }
 

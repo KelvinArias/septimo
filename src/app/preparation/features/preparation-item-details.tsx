@@ -1,19 +1,36 @@
 import { Pencil } from "lucide-react";
+import { ProductionStatusBadge } from "./production-status-badge";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 import { Button } from "@/components/ui/button";
 import { Metric } from "@/components/ui/metric";
 import { Modal } from "@/components/ui/modal";
 import { StockStatusBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/utils";
-import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
+import {
+  getMissingIngredientNames,
+  getPreparationStockStatus,
+  getProductionStatus,
+  isProductionTrackedPreparation,
+} from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type PreparationItemDetailsProps = {
+  inventoryItems: InventoryItem[];
   item: PreparationItem;
   onClose: () => void;
   onEdit: () => void;
 };
 
-export function PreparationItemDetails({ item, onClose, onEdit }: PreparationItemDetailsProps) {
+export function PreparationItemDetails({
+  inventoryItems,
+  item,
+  onClose,
+  onEdit,
+}: PreparationItemDetailsProps) {
+  const productionStatus = getProductionStatus(item, inventoryItems);
+  const missingIngredientNames = getMissingIngredientNames(item, inventoryItems);
+  const showsProductionStatus = isProductionTrackedPreparation(item);
+
   return (
     <Modal
       title={item.name}
@@ -29,10 +46,24 @@ export function PreparationItemDetails({ item, onClose, onEdit }: PreparationIte
               Status
             </p>
             <div className="mt-1">
-              <StockStatusBadge status={getPreparationStockStatus(item)} />
+              <StockStatusBadge showIcon={false} status={getPreparationStockStatus(item)} />
             </div>
           </div>
         </div>
+        {showsProductionStatus && (
+          <div className="rounded-md border border-[#e3dfd7] bg-white p-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a857d]">
+              Production
+            </p>
+            <div className="mt-1">
+              <ProductionStatusBadge
+                missingIngredientNames={missingIngredientNames}
+                status={productionStatus}
+                showCanProduce
+              />
+            </div>
+          </div>
+        )}
         {item.notes && <p className="text-sm leading-6 text-[#5f5a52]">{item.notes}</p>}
         <div>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#6f6960]">

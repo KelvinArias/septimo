@@ -21,7 +21,10 @@ import {
   isInventoryOutOfStock,
   prepareInventoryItemForSave,
 } from "@/app/inventory/utils/inventory.utils";
-import { getGeneratedLowStockTasks } from "@/app/tasks/utils/task.utils";
+import {
+  getGeneratedInventoryRestockTasks,
+  getGeneratedLowStockTasks,
+} from "@/app/tasks/utils/task.utils";
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 import {
@@ -59,7 +62,8 @@ export function InventoryPageContent() {
         setItems(loadedItems);
         setPendingTaskCount(
           [
-            ...getGeneratedLowStockTasks(preparations, tasks),
+            ...getGeneratedLowStockTasks(preparations, tasks, loadedItems),
+            ...getGeneratedInventoryRestockTasks(loadedItems, preparations, tasks),
             ...tasks,
           ].filter((task) => task.status === "pending").length,
         );

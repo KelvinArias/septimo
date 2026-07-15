@@ -6,21 +6,25 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/app/features/navigation/app-shell";
 import { RouteErrorBanner, RouteLoadingBanner } from "@/app/features/route-feedback";
 import { getErrorMessage, upsertById } from "@/app/features/route-state.utils";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 import { TaskForm } from "@/app/tasks/features/task-form";
 import { TaskList } from "@/app/tasks/features/task-list";
 import type { Task } from "@/app/tasks/types/task";
 import {
   createTaskDraft,
+  getGeneratedInventoryRestockTasks,
   getGeneratedLowStockTasks,
   markTaskCompleted,
   prepareTaskForSave,
 } from "@/app/tasks/utils/task.utils";
 import { Button } from "@/components/ui/button";
+import { fetchInventoryItems } from "@/services/inventory-client.service";
 import { fetchPreparationItems } from "@/services/preparation-client.service";
 import { fetchTasks, removeTask, saveTask } from "@/services/task-client.service";
 
 export function TasksPageContent() {
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [preparations, setPreparations] = useState<PreparationItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,11 +35,13 @@ export function TasksPageContent() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [loadedPreparations, loadedTasks] = await Promise.all([
+        const [loadedInventoryItems, loadedPreparations, loadedTasks] = await Promise.all([
+          fetchInventoryItems(),
           fetchPreparationItems(),
           fetchTasks(),
         ]);
 
+        setInventoryItems(loadedInventoryItems);
         setPreparations(loadedPreparations);
         setTasks(loadedTasks);
         setApiMessage(null);
@@ -51,10 +57,11 @@ export function TasksPageContent() {
 
   const generatedTasks = useMemo(
     () =>
-      getGeneratedLowStockTasks(preparations, tasks).filter(
-        (task) => !dismissedAutoTaskIds.includes(task.id),
-      ),
-    [dismissedAutoTaskIds, preparations, tasks],
+      [
+        ...getGeneratedLowStockTasks(preparations, tasks, inventoryItems),
+        ...getGeneratedInventoryRestockTasks(inventoryItems, preparations, tasks),
+      ].filter((task) => !dismissedAutoTaskIds.includes(task.id)),
+    [dismissedAutoTaskIds, inventoryItems, preparations, tasks],
   );
   const allTasks = useMemo(() => [...generatedTasks, ...tasks], [generatedTasks, tasks]);
   const pendingTasks = allTasks.filter((task) => task.status === "pending");
@@ -120,7 +127,7 @@ export function TasksPageContent() {
         </Button>
       }
       pendingTaskCount={pendingTasks.length}
-      subtitle={`${pendingTasks.length} pending - ${generatedTasks.length} from low prep`}
+      subtitle={`${pendingTasks.length} pending - ${generatedTasks.length} automatic`}
       title="Tasks"
     >
       {apiMessage && <RouteErrorBanner message={apiMessage} />}
@@ -128,6 +135,7 @@ export function TasksPageContent() {
 
       <TaskList
         generatedCount={generatedTasks.length}
+        inventoryItems={inventoryItems}
         preparations={preparations}
         tasks={pendingTasks}
         onComplete={handleCompleteTask}

@@ -2,22 +2,27 @@ import { PreparationSearch } from "./preparation-search";
 import { SelectControl } from "@/components/ui/select-control";
 import { preparationCategories } from "@/lib/constants";
 import type { PreparationCategory } from "@/app/preparation/types/preparation";
+import type { ProductionStatusFilter } from "@/app/preparation/utils/preparation.utils";
 import type { StockStatusFilter } from "@/utils";
 
 type PreparationFiltersProps = {
   category: "All" | PreparationCategory;
+  productionStatus: ProductionStatusFilter;
   stockStatus: StockStatusFilter;
   search: string;
   onCategoryChange: (category: "All" | PreparationCategory) => void;
+  onProductionStatusChange: (status: ProductionStatusFilter) => void;
   onStockStatusChange: (status: StockStatusFilter) => void;
   onSearchChange: (value: string) => void;
 };
 
 export function PreparationFilters({
   category,
+  productionStatus,
   stockStatus,
   search,
   onCategoryChange,
+  onProductionStatusChange,
   onStockStatusChange,
   onSearchChange,
 }: PreparationFiltersProps) {
@@ -53,6 +58,18 @@ export function PreparationFilters({
         <option value="available">Available</option>
         <option value="low-stock">Low Stock</option>
         <option value="out-of-stock">Out of Stock</option>
+      </SelectControl>
+      <SelectControl
+        className="h-9"
+        containerClassName="max-w-[190px] flex-[1_1_180px]"
+        value={productionStatus}
+        onChange={(event) =>
+          onProductionStatusChange(event.target.value as ProductionStatusFilter)
+        }
+      >
+        <option value="All">All Production</option>
+        <option value="can-produce">Can Produce</option>
+        <option value="cannot-produce">Cannot Produce</option>
       </SelectControl>
     </div>
   );

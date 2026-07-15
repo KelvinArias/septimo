@@ -2,15 +2,22 @@ import { Eye, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AmountEditor } from "./amount-editor";
 import { AmountUpdateModal } from "./amount-update-modal";
+import { MissingIngredientsInfo } from "./missing-ingredients-info";
+import type { InventoryItem } from "@/app/inventory/types/inventory";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { StockStatusBadge } from "@/components/ui/status-badge";
 import { classNames } from "@/utils";
 import type { StockStatus } from "@/utils";
-import { getPreparationStockStatus } from "@/app/preparation/utils/preparation.utils";
+import {
+  getMissingIngredientDetails,
+  getPreparationStockStatus,
+  cannotProduce,
+} from "@/app/preparation/utils/preparation.utils";
 import type { PreparationItem } from "@/app/preparation/types/preparation";
 
 type PreparationItemCardProps = {
+  inventoryItems: InventoryItem[];
   item: PreparationItem;
   onDelete: (id: string) => void;
   onEdit: (item: PreparationItem) => void;
@@ -19,6 +26,7 @@ type PreparationItemCardProps = {
 };
 
 export function PreparationItemCard({
+  inventoryItems,
   item,
   onDelete,
   onEdit,
@@ -26,6 +34,8 @@ export function PreparationItemCard({
   onView,
 }: PreparationItemCardProps) {
   const stockStatus = getPreparationStockStatus(item);
+  const missingIngredients = getMissingIngredientDetails(item, inventoryItems);
+  const hasMissingIngredients = missingIngredients.length > 0 && cannotProduce(item, inventoryItems);
   const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
 
   return (
@@ -33,7 +43,7 @@ export function PreparationItemCard({
       <div
         className={classNames(
           "w-full min-w-0 max-w-full rounded-lg border bg-white p-4 text-sm shadow-[0_1px_0_rgba(17,17,17,0.02)] md:p-4 lg:grid lg:rounded-none lg:border-x-0 lg:border-b-0 lg:border-t lg:bg-transparent lg:p-0 lg:py-4 lg:shadow-none",
-          "lg:grid-cols-[2fr_0.8fr_0.7fr_0.7fr_0.45fr_0.8fr_1fr] lg:items-center lg:gap-4",
+          "lg:grid-cols-[1.7fr_0.7fr_0.65fr_0.65fr_0.4fr_0.75fr_0.85fr] lg:items-center lg:gap-4",
           stockStatus === "out-of-stock" && "border-[#d92d20] lg:bg-[#fff5f5]",
           stockStatus === "low-stock" && "border-[#f4b000] lg:bg-[#fbf7ef]",
           stockStatus === "available" && "border-[#e3dfd7]",
@@ -43,8 +53,11 @@ export function PreparationItemCard({
           <button className="min-w-0 text-left" onClick={() => onView(item)}>
             <p className="font-semibold">{item.name}</p>
           </button>
-          <div className="shrink-0 lg:hidden">
-            <StockStatusBadge status={stockStatus} />
+          <div className="flex shrink-0 items-center gap-1 lg:hidden">
+            <StockStatusBadge showIcon={false} status={stockStatus} />
+            {hasMissingIngredients && (
+              <MissingIngredientsInfo ingredients={missingIngredients} />
+            )}
           </div>
         </div>
 
@@ -67,8 +80,11 @@ export function PreparationItemCard({
         </div>
         <span className="hidden font-mono text-sm lg:block">{item.minimumAmount}</span>
         <span className="hidden text-[#635d55] lg:block">{item.unit}</span>
-        <div className="hidden lg:block">
-          <StockStatusBadge status={stockStatus} />
+        <div className="hidden items-center gap-1 lg:flex">
+          <StockStatusBadge showIcon={false} status={stockStatus} />
+          {hasMissingIngredients && (
+            <MissingIngredientsInfo ingredients={missingIngredients} />
+          )}
         </div>
 
         {item.notes && (

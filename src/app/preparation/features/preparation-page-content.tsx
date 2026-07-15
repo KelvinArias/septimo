@@ -25,11 +25,16 @@ import type {
 import {
   createPreparationItemDraft,
   filterPreparationItems,
+  isCannotProduce,
   isLowStock,
   isOutOfStock,
   preparePreparationItemForSave,
+  type ProductionStatusFilter,
 } from "@/app/preparation/utils/preparation.utils";
-import { getGeneratedLowStockTasks } from "@/app/tasks/utils/task.utils";
+import {
+  getGeneratedInventoryRestockTasks,
+  getGeneratedLowStockTasks,
+} from "@/app/tasks/utils/task.utils";
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 import {
@@ -55,6 +60,7 @@ export function PreparationPageContent() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"All" | PreparationCategory>("All");
   const [stockStatus, setStockStatus] = useState<StockStatusFilter>("All");
+  const [productionStatus, setProductionStatus] = useState<ProductionStatusFilter>("All");
   const [editingItem, setEditingItem] = useState<PreparationItem | null>(null);
   const [viewingItem, setViewingItem] = useState<PreparationItem | null>(null);
 
@@ -71,7 +77,8 @@ export function PreparationPageContent() {
         setInventoryItems(loadedInventoryItems);
         setPendingTaskCount(
           [
-            ...getGeneratedLowStockTasks(loadedItems, tasks),
+            ...getGeneratedLowStockTasks(loadedItems, tasks, loadedInventoryItems),
+            ...getGeneratedInventoryRestockTasks(loadedInventoryItems, loadedItems, tasks),
             ...tasks,
           ].filter((task) => task.status === "pending").length,
         );
@@ -96,7 +103,15 @@ export function PreparationPageContent() {
 
   const lowItems = useMemo(() => items.filter(isLowStock), [items]);
   const outOfStockItems = useMemo(() => items.filter(isOutOfStock), [items]);
-  const filteredItems = filterPreparationItems(items, { category, search, stockStatus });
+  const cannotProduceItems = useMemo(
+    () => items.filter((item) => isCannotProduce(item, inventoryItems)),
+    [inventoryItems, items],
+  );
+  const filteredItems = filterPreparationItems(
+    items,
+    { category, productionStatus, search, stockStatus },
+    inventoryItems,
+  );
 
   async function handleQuickCreateInventoryItem(
     name: string,
@@ -191,18 +206,20 @@ export function PreparationPageContent() {
         </Button>
       }
       pendingTaskCount={pendingTaskCount}
-      subtitle={`${items.length} preparations - ${lowItems.length} low stock - ${outOfStockItems.length} out of stock`}
+      subtitle={`${items.length} preparations - ${lowItems.length} low stock - ${outOfStockItems.length} out of stock - ${cannotProduceItems.length} cannot produce`}
       title="Preparation"
     >
       {apiMessage && <RouteErrorBanner message={apiMessage} />}
       {isLoading && <RouteLoadingBanner />}
 
       <PreparationDashboard
-        filters={{ category, search, stockStatus }}
+        filters={{ category, productionStatus, search, stockStatus }}
+        inventoryItems={inventoryItems}
         items={filteredItems}
         onCategoryChange={setCategory}
         onDelete={handleDeleteItem}
         onEdit={setEditingItem}
+        onProductionStatusChange={setProductionStatus}
         onSearchChange={setSearch}
         onStockStatusChange={setStockStatus}
         onUpdateAmount={handleUpdateAmount}
@@ -222,6 +239,7 @@ export function PreparationPageContent() {
 
       {viewingItem && (
         <PreparationItemDetails
+          inventoryItems={inventoryItems}
           item={viewingItem}
           onClose={() => setViewingItem(null)}
           onEdit={() => {
